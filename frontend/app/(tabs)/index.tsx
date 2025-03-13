@@ -1,11 +1,14 @@
 import React from 'react';
-import { StyleSheet, SafeAreaView } from 'react-native';
+import { StyleSheet, SafeAreaView, Button } from 'react-native';
 import { ThemedView } from '@/components/ThemedView';
 import { ThemedText } from '@/components/ThemedText';
 import WineList from '@/components/WineList';
 import { Navbar } from '@/components/Navbar';
+import { useRouter } from 'expo-router';
 
 export default function HomeScreen() {
+  const router = useRouter();
+
   return (
     <SafeAreaView style={styles.safeArea}>
       <ThemedView style={styles.container}>
@@ -17,6 +20,10 @@ export default function HomeScreen() {
           Lista de vinhos
         </ThemedText>
         <WineList />
+        <Button 
+          title="Ir para TestApiPage"
+          onPress={() => router.push('/(tabs)/TestApiPage')}
+        />
       </ThemedView>
     </SafeAreaView>
   );
@@ -37,4 +44,3 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
 });
-

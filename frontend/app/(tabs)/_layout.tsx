@@ -20,7 +20,7 @@ export default function TabLayout() {
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
           ios: {
-            // Use a transparent background on iOS to show the blur effect
+            // Use a transparent background on iOS para mostrar o efeito de desfoque
             position: 'absolute',
           },
           default: {},
@@ -38,6 +38,13 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="TestApiPage"
+        options={{
+          title: 'Test API',
+          tabBarIcon: ({ color }) => <IconSymbol size={28} name="flask.fill" color={color} />,
         }}
       />
     </Tabs>
