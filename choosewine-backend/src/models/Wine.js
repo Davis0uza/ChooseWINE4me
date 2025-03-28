@@ -3,7 +3,7 @@ const mongoose = require('mongoose');
 const WineSchema = new mongoose.Schema({
   id_wine: { type: Number, required: true, unique: true },
   name: { type: String, required: true },
-  thumb: { type: String }, // ou Buffer se quiser armazenar binário
+  thumb: { type: String }, 
   country: { type: String },
   region: { type: String },
   average_rating: { type: Number, default: 0 },

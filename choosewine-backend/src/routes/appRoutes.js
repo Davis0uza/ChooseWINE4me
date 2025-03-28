@@ -3,6 +3,8 @@ const router = express.Router();
 
 const userController = require('../controllers/userController');
 const addressController = require('../controllers/addressControllers');
+const wineController = require('../controllers/wineController');
+const favoriteController = require('../controllers/favoriteController');
 
 // Rotas para Usuários
 router.get('/users', userController.getAllUsers);
@@ -17,5 +19,19 @@ router.get('/addresses/:id', addressController.getAddressById);
 router.post('/addresses', addressController.createAddress);
 router.put('/addresses/:id', addressController.updateAddress);
 router.delete('/addresses/:id', addressController.deleteAddress);
+
+// Rotas para Vinhos
+router.get('/wines', wineController.getAllWines);
+router.get('/wines/:id', wineController.getWineById);
+router.post('/wines', wineController.createWine);
+router.put('/wines/:id', wineController.updateWine);
+router.delete('/wines/:id', wineController.deleteWine);
+
+// Rotas para Favoritos
+router.get('/favorites', favoriteController.getAllFavorites);
+router.get('/favorites/:id', favoriteController.getFavoriteById);
+router.post('/favorites', favoriteController.createFavorite);
+router.put('/favorites/:id', favoriteController.updateFavorite);
+router.delete('/favorites/:id', favoriteController.deleteFavorite);
 
 module.exports = router;
