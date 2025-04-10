@@ -2,9 +2,14 @@ const express = require('express');
 const router = express.Router();
 
 const userController = require('../controllers/userController');
-const addressController = require('../controllers/addressControllers');
+const addressController = require('../controllers/addressController');
 const wineController = require('../controllers/wineController');
 const favoriteController = require('../controllers/favoriteController');
+const historyController = require('../controllers/historyController');
+
+const { verifyToken } = require('../middleware/authMiddleware'); 
+
+router.use(verifyToken);
 
 // Rotas para Usuários
 router.get('/users', userController.getAllUsers);
@@ -33,5 +38,12 @@ router.get('/favorites/:id', favoriteController.getFavoriteById);
 router.post('/favorites', favoriteController.createFavorite);
 router.put('/favorites/:id', favoriteController.updateFavorite);
 router.delete('/favorites/:id', favoriteController.deleteFavorite);
+
+// Rotas para Histórico
+router.get('/history', historyController.getAllHistories);
+router.get('/history/:id', historyController.getHistoryById);
+router.post('/history', historyController.createHistory);
+router.put('/history/:id', historyController.updateHistory);
+router.delete('/history/:id', historyController.deleteHistory);
 
 module.exports = router;
