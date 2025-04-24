@@ -1,6 +1,5 @@
 const Wine = require('../models/Wine');
 
-// Listar todos os vinhos
 exports.getAllWines = async (req, res) => {
   try {
     const wines = await Wine.find();
@@ -11,7 +10,6 @@ exports.getAllWines = async (req, res) => {
   }
 };
 
-// Buscar vinho por ID
 exports.getWineById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -26,7 +24,6 @@ exports.getWineById = async (req, res) => {
   }
 };
 
-// Criar um novo vinho
 exports.createWine = async (req, res) => {
   try {
     const { name, thumb, country, region, price } = req.body;
@@ -53,7 +50,6 @@ exports.createWine = async (req, res) => {
   }
 };
 
-// Atualizar um vinho (exceto id_wine, average_rating e ratings)
 exports.updateWine = async (req, res) => {
   try {
     const { id } = req.params;
@@ -76,7 +72,6 @@ exports.updateWine = async (req, res) => {
   }
 };
 
-// Deletar um vinho
 exports.deleteWine = async (req, res) => {
   try {
     const { id } = req.params;

@@ -11,7 +11,7 @@ const { verifyToken } = require('../middleware/authMiddleware');
 
 router.use(verifyToken);
 
-// Rotas para Usuários
+// Rotas para Users
 router.get('/users', userController.getAllUsers);
 router.get('/users/:id', userController.getUserById);
 router.post('/users', userController.createUser);
@@ -19,7 +19,7 @@ router.put('/users/:id', userController.updateUser);
 router.delete('/users/:id', userController.deleteUser);
 
 // Rotas para Addresses
-router.get('/addresses', addressController.getAllAddresses);
+router.get('/addresses', addressController.getAllAddresses); 
 router.get('/addresses/:id', addressController.getAddressById);
 router.post('/addresses', addressController.createAddress);
 router.put('/addresses/:id', addressController.updateAddress);
