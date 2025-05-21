@@ -1,83 +1,98 @@
 const History = require('../models/History');
+const Wine = require('../models/Wine');
 
-exports.createHistory = async (req, res) => {
+// Adicionar ou atualizar histórico
+exports.createOrUpdateHistory = async (req, res) => {
   try {
-    // Se desejar, permita que accessed_at seja enviado ou utilize o default Date.now()
-    const { id_user, accessed_at } = req.body;
-    
-    // Busca o último histórico para definir o novo id_history de forma sequencial
-    const lastHistory = await History.findOne({}).sort({ id_history: -1 });
-    const newIdHistory = lastHistory && lastHistory.id_history ? lastHistory.id_history + 1 : 1;
-    
-    const newHistory = new History({
-      id_history: newIdHistory,
-      id_user,
-      accessed_at: accessed_at ? accessed_at : Date.now(),
-    });
-    
-    await newHistory.save();
-    return res.status(201).json(newHistory);
-  } catch (error) {
-    console.error('Erro ao criar history:', error);
-    return res.status(500).json({ error: 'Erro ao criar history' });
-  }
-};
+    const { userId, wineId } = req.body;
 
-exports.getAllHistories = async (req, res) => {
-  try {
-    const histories = await History.find();
-    return res.json(histories);
-  } catch (error) {
-    console.error('Erro ao buscar histories:', error);
-    return res.status(500).json({ error: 'Erro ao buscar histories' });
-  }
-};
-
-exports.getHistoryById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const history = await History.findOne({ id_history: id });
-    if (!history) {
-      return res.status(404).json({ error: 'History não encontrado' });
+    // Verifica se vinho existe
+    const wine = await Wine.findById(wineId);
+    if (!wine) {
+      return res.status(404).json({ error: 'Vinho não encontrado' });
     }
+
+    // Verifica se já existe este vinho no histórico do user
+    const existing = await History.findOne({ user: userId, wine: wineId });
+
+    if (existing) {
+      // Atualiza data de acesso
+      existing.accessed_at = new Date();
+      await existing.save();
+    } else {
+      // Adiciona novo histórico
+      await History.create({ user: userId, wine: wineId, accessed_at: new Date() });
+    }
+
+    // Garante que só existam os 10 mais recentes
+    const total = await History.countDocuments({ user: userId });
+    if (total > 10) {
+      const excess = await History.find({ user: userId })
+        .sort({ accessed_at: 1 })
+        .limit(total - 10);
+      const toDelete = excess.map(h => h._id);
+      await History.deleteMany({ _id: { $in: toDelete } });
+    }
+
+    return res.status(201).json({ message: 'Histórico atualizado' });
+  } catch (error) {
+    console.error('Erro ao atualizar histórico:', error);
+    return res.status(500).json({ error: 'Erro ao atualizar histórico' });
+  }
+};
+
+// Obter os últimos 10 acessos
+exports.getUserHistory = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const history = await History.find({ user: userId })
+      .sort({ accessed_at: -1 })
+      .limit(10)
+      .populate('wine');
     return res.json(history);
   } catch (error) {
-    console.error('Erro ao buscar history:', error);
-    return res.status(500).json({ error: 'Erro ao buscar history' });
+    console.error('Erro ao buscar histórico:', error);
+    return res.status(500).json({ error: 'Erro ao buscar histórico' });
   }
 };
 
+// Atualizar manualmente um histórico (ex: corrigir vinho ou timestamp)
 exports.updateHistory = async (req, res) => {
   try {
     const { id } = req.params;
-    // Permite atualizar o id_user ou accessed_at, se necessário
-    const { id_user, accessed_at } = req.body;
-    const updatedHistory = await History.findOneAndUpdate(
-      { id_history: id },
-      { id_user, accessed_at },
+    const { wineId, accessed_at } = req.body;
+
+    const updated = await History.findByIdAndUpdate(
+      id,
+      {
+        ...(wineId && { wine: wineId }),
+        ...(accessed_at && { accessed_at })
+      },
       { new: true }
-    );
-    
-    if (!updatedHistory) {
-      return res.status(404).json({ error: 'History não encontrado' });
+    ).populate('wine');
+
+    if (!updated) {
+      return res.status(404).json({ error: 'Histórico não encontrado' });
     }
-    return res.json(updatedHistory);
+
+    return res.json(updated);
   } catch (error) {
-    console.error('Erro ao atualizar history:', error);
-    return res.status(500).json({ error: 'Erro ao atualizar history' });
+    console.error('Erro ao atualizar histórico:', error);
+    return res.status(500).json({ error: 'Erro ao atualizar histórico' });
   }
 };
 
+// Remover histórico
 exports.deleteHistory = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedHistory = await History.findOneAndDelete({ id_history: id });
-    if (!deletedHistory) {
-      return res.status(404).json({ error: 'History não encontrado' });
+    const deleted = await History.findByIdAndDelete(id);
+    if (!deleted) {
+      return res.status(404).json({ error: 'Histórico não encontrado' });
     }
-    return res.json({ message: 'History deletado com sucesso' });
+    return res.json({ message: 'Histórico removido com sucesso' });
   } catch (error) {
-    console.error('Erro ao deletar history:', error);
-    return res.status(500).json({ error: 'Erro ao deletar history' });
+    console.error('Erro ao deletar histórico:', error);
+    return res.status(500).json({ error: 'Erro ao deletar histórico' });
   }
 };

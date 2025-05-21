@@ -8,8 +8,8 @@ from joblib import dump
 from pandas.errors import EmptyDataError
 
 # Caminhos dos CSVs
-fav_path = 'data/favorites.csv'
-rat_path = 'data/ratings.csv'
+fav_path = 'ml_service/data/favorites.csv'
+rat_path = 'ml_service/data/ratings.csv'
 
 # 1) Tenta ler favorites.csv
 try:
@@ -19,42 +19,39 @@ except EmptyDataError:
     print("favorites.csv vazio ou não existe; pulando")
     df_fav = pd.DataFrame()
 
-# 2) Se estiver vazio, cai em ratings.csv
+# 2) Fallback para ratings
 if df_fav.empty:
     try:
         df_rat = pd.read_csv(rat_path)
         print(f"ratings.csv carregado com {len(df_rat)} linhas")
     except EmptyDataError:
         raise ValueError("ratings.csv também está vazio ou não existe — sem dados para treinar CF.")
-    # usa id_user e id_wine de ratings como feedback implícito
-    df_fav = df_rat[['id_user', 'id_wine']].copy()
-else:
-    print("Usando favorites.csv para feedback implícito")
+    df_fav = df_rat[['user', 'wine']].copy()  # campos já convertidos de _id
 
-# 3) Mapeia IDs únicos de usuário e vinho para índices
-user_ids = sorted(df_fav['id_user'].unique())
-wine_ids = sorted(df_fav['id_wine'].unique())
+# 3) Garante que os IDs são strings
+df_fav['user'] = df_fav['user'].astype(str)
+df_fav['wine'] = df_fav['wine'].astype(str)
+
+# 4) Mapeia IDs únicos para índices
+user_ids = sorted(df_fav['user'].unique())
+wine_ids = sorted(df_fav['wine'].unique())
 user_map = {u: i for i, u in enumerate(user_ids)}
 wine_map = {w: i for i, w in enumerate(wine_ids)}
 
-# 4) Prepara arrays para a matriz esparsa
-rows = df_fav['id_user'].map(user_map)
-cols = df_fav['id_wine'].map(wine_map)
-data = [1] * len(df_fav)  # feedback implícito
+# 5) Prepara matriz esparsa
+rows = df_fav['user'].map(user_map)
+cols = df_fav['wine'].map(wine_map)
+data = [1] * len(df_fav)
 
-# 5) Monta a matriz usuário×vinho
-mat = sp.csr_matrix(
-    (data, (rows, cols)),
-    shape=(len(user_ids), len(wine_ids))
-)
+mat = sp.csr_matrix((data, (rows, cols)), shape=(len(user_ids), len(wine_ids)))
 
-# 6) Treina o modelo NearestNeighbors (user-based CF)
+# 6) Treina modelo CF
 model = NearestNeighbors(metric='cosine', algorithm='brute')
 model.fit(mat)
 
-# 7) Salva o modelo e os mapeamentos
-os.makedirs('models', exist_ok=True)
-dump((model, user_ids, wine_ids), 'models/model_cf.joblib')
+# 7) Salva modelo
+os.makedirs('ml_service/models', exist_ok=True)
+dump((model, user_ids, wine_ids), 'ml_service/models/model_cf.joblib')
 
 print(f"✓ Modelo treinado e salvo em models/model_cf.joblib")
-print(f"  • {len(user_ids)} usuários, {len(wine_ids)} vinhos")
+print(f"  • {len(user_ids)} users, {len(wine_ids)} vinhos")

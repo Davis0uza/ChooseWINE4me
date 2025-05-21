@@ -1,14 +1,18 @@
 const mongoose = require('mongoose');
 
 const WineSchema = new mongoose.Schema({
-  id_wine: { type: Number, required: true, unique: true },
+  url: { type: String },
   name: { type: String, required: true },
-  thumb: { type: String }, 
+  type: { type: String }, // ex: "Red", "White", "Sparkling", etc.
+  rating: { type: Number },
   country: { type: String },
-  region: { type: String },
-  average_rating: { type: Number, default: 0 },
-  ratings: { type: Number, default: 0 },
-  price: { type: Number, default: 0 },
+  winery: { type: String },
+  alcoholLevel: { type: Number },
+  image: { type: String },
+  price: { type: Number },
+  year: { type: String }
+}, {
+  timestamps: true
 });
 
 module.exports = mongoose.model('Wine', WineSchema);

@@ -1,9 +1,9 @@
 const mongoose = require('mongoose');
 
 const HistorySchema = new mongoose.Schema({
-  id_history: { type: Number, required: true, unique: true },
-  id_user: { type: Number, required: true },
-  accessed_at: { type: Date, default: Date.now },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  wine: { type: mongoose.Schema.Types.ObjectId, ref: 'Wine', required: true },
+  accessed_at: { type: Date, default: Date.now }
 });
 
 module.exports = mongoose.model('History', HistorySchema);

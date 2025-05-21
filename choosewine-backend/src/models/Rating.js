@@ -1,11 +1,10 @@
 const mongoose = require('mongoose');
 
 const RatingSchema = new mongoose.Schema({
-  id_rating: { type: Number, required: true, unique: true },
-  id_user: { type: Number, required: true },
-  id_wine: { type: Number, required: true },
+  user: { type: Number, required: true }, // ou podes mudar para ObjectId se usares _id no User
+  wine: { type: mongoose.Schema.Types.ObjectId, ref: 'Wine', required: true },
   rating: { type: Number, required: true },
-  comment: { type: String },
+  comment: { type: String }
 });
 
 module.exports = mongoose.model('Rating', RatingSchema);

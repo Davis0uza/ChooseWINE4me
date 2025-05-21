@@ -1,50 +1,84 @@
 const Rating = require('../models/Rating');
 const Wine = require('../models/Wine');
 
+// Criar um novo rating
 exports.createRating = async (req, res) => {
   try {
-    const { id_user, id_wine, rating, comment } = req.body;
-    
-    // Validação simples para o rating (exemplo: deve estar entre 0 e 5)
+    const { user, wineId, rating, comment } = req.body;
+
     if (typeof rating !== 'number' || rating < 0 || rating > 5) {
       return res.status(400).json({ error: 'Rating deve ser um número entre 0 e 5' });
     }
-    
+
     // Verificar se o vinho existe
-    const wine = await Wine.findOne({ id_wine });
+    const wine = await Wine.findById(wineId);
     if (!wine) {
       return res.status(404).json({ error: 'Vinho não encontrado' });
     }
-    
-    // Atualiza os dados do vinho:
-    // Novo total de ratings e nova média considerando o rating atual
-    const currentCount = wine.ratings;
-    const currentAverage = wine.average_rating;
+
+    // Atualiza média e contagem
+    const currentCount = wine.ratings || 0;
+    const currentAverage = wine.average_rating || 0;
     const newCount = currentCount + 1;
     const newAverage = ((currentAverage * currentCount) + rating) / newCount;
-    
+
     wine.ratings = newCount;
     wine.average_rating = newAverage;
     await wine.save();
-    
-    // Gerar um novo id_rating de forma sequencial
-    const lastRating = await Rating.findOne({}).sort({ id_rating: -1 });
-    const newIdRating = lastRating && lastRating.id_rating ? lastRating.id_rating + 1 : 1;
-    
-    // Criar o novo rating
+
+    // Criar rating
     const newRating = new Rating({
-      id_rating: newIdRating,
-      id_user,
-      id_wine,
+      user,
+      wine: wine._id,
       rating,
-      comment,
+      comment
     });
-    
+
     await newRating.save();
-    
     return res.status(201).json(newRating);
   } catch (error) {
     console.error('Erro ao criar rating:', error);
     return res.status(500).json({ error: 'Erro ao criar rating' });
+  }
+};
+
+// Obter todos os ratings
+exports.getAllRatings = async (req, res) => {
+  try {
+    const ratings = await Rating.find().populate('wine');
+    return res.json(ratings);
+  } catch (error) {
+    console.error('Erro ao buscar ratings:', error);
+    return res.status(500).json({ error: 'Erro ao buscar ratings' });
+  }
+};
+
+// Obter rating por ID
+exports.getRatingById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rating = await Rating.findById(id).populate('wine');
+    if (!rating) {
+      return res.status(404).json({ error: 'Rating não encontrado' });
+    }
+    return res.json(rating);
+  } catch (error) {
+    console.error('Erro ao buscar rating:', error);
+    return res.status(500).json({ error: 'Erro ao buscar rating' });
+  }
+};
+
+// Deletar rating
+exports.deleteRating = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const deletedRating = await Rating.findByIdAndDelete(id);
+    if (!deletedRating) {
+      return res.status(404).json({ error: 'Rating não encontrado' });
+    }
+    return res.json({ message: 'Rating deletado com sucesso' });
+  } catch (error) {
+    console.error('Erro ao deletar rating:', error);
+    return res.status(500).json({ error: 'Erro ao deletar rating' });
   }
 };

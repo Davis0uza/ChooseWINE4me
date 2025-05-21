@@ -1,30 +1,28 @@
 const Favorite = require('../models/Favorite');
 const Wine = require('../models/Wine');
 
+// Criar um favorito
 exports.createFavorite = async (req, res) => {
   try {
-    const { id_user, id_wine } = req.body;
-    
-     // Verifica se o vinho existe
-     const wine = await Wine.findOne({ id_wine: id_wine });
-     if (!wine) {
-       return res.status(404).json({ error: 'Vinho não encontrado' });
-     }
+    const { user, wineId } = req.body;
 
-    //verifica se já existe relação
-    const existe = await Favorite.findOne({ id_user, id_wine });
-    if (existe) return res.status(400).json({ error: "Favorito já registrado" });
-    
-    // Busca o último favorito para gerar um novo id_fav sequencial
-    const lastFav = await Favorite.findOne({}).sort({ id_fav: -1 });
-    const newIdFav = lastFav && lastFav.id_fav ? lastFav.id_fav + 1 : 1;
-    
+    // Verifica se o vinho existe
+    const wine = await Wine.findById(wineId);
+    if (!wine) {
+      return res.status(404).json({ error: 'Vinho não encontrado' });
+    }
+
+    // Verifica se já existe relação
+    const existe = await Favorite.findOne({ user, wine: wineId });
+    if (existe) {
+      return res.status(400).json({ error: 'Favorito já registrado' });
+    }
+
     const newFavorite = new Favorite({
-      id_fav: newIdFav,
-      id_user,
-      id_wine,
+      user,
+      wine: wine._id
     });
-    
+
     await newFavorite.save();
     return res.status(201).json(newFavorite);
   } catch (error) {
@@ -33,10 +31,10 @@ exports.createFavorite = async (req, res) => {
   }
 };
 
-// Listar todos os favoritos
+// Listar todos os favoritos (com vinho populado)
 exports.getAllFavorites = async (req, res) => {
   try {
-    const favorites = await Favorite.find();
+    const favorites = await Favorite.find().populate('wine');
     return res.json(favorites);
   } catch (error) {
     console.error('Erro ao buscar favorites:', error);
@@ -44,11 +42,11 @@ exports.getAllFavorites = async (req, res) => {
   }
 };
 
-// Buscar favorito por id_fav
+// Buscar favorito por ID (do Mongo)
 exports.getFavoriteById = async (req, res) => {
   try {
     const { id } = req.params;
-    const favorite = await Favorite.findOne({ id_fav: id });
+    const favorite = await Favorite.findById(id).populate('wine');
     if (!favorite) {
       return res.status(404).json({ error: 'Favorite não encontrado' });
     }
@@ -59,20 +57,22 @@ exports.getFavoriteById = async (req, res) => {
   }
 };
 
-// Atualizar favorito (por exemplo, atualizar id_wine se necessário)
+// Atualizar vinho associado a um favorito
 exports.updateFavorite = async (req, res) => {
   try {
     const { id } = req.params;
-    // Permite atualizar o id_wine; id_user não é alterado para manter a associação
-    const { id_wine } = req.body;
-    const updatedFavorite = await Favorite.findOneAndUpdate(
-      { id_fav: id },
-      { id_wine },
+    const { wineId } = req.body;
+
+    const updatedFavorite = await Favorite.findByIdAndUpdate(
+      id,
+      { wine: wineId },
       { new: true }
     );
+
     if (!updatedFavorite) {
       return res.status(404).json({ error: 'Favorite não encontrado' });
     }
+
     return res.json(updatedFavorite);
   } catch (error) {
     console.error('Erro ao atualizar favorite:', error);
@@ -84,7 +84,7 @@ exports.updateFavorite = async (req, res) => {
 exports.deleteFavorite = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedFavorite = await Favorite.findOneAndDelete({ id_fav: id });
+    const deletedFavorite = await Favorite.findByIdAndDelete(id);
     if (!deletedFavorite) {
       return res.status(404).json({ error: 'Favorite não encontrado' });
     }

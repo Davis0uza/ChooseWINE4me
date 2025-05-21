@@ -1,9 +1,8 @@
 const mongoose = require('mongoose');
 
 const FavoriteSchema = new mongoose.Schema({
-  id_fav: { type: Number, required: true, unique: true },
-  id_wine: { type: Number, required: true },
-  id_user: { type: Number, required: true },
+  user: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  wine: { type: mongoose.Schema.Types.ObjectId, ref: 'Wine', required: true }
 });
 
 module.exports = mongoose.model('Favorite', FavoriteSchema);

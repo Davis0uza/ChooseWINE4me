@@ -1,85 +1,93 @@
 const Address = require('../models/Address');
+const User = require('../models/User');
 
+// Criar nova morada
 exports.createAddress = async (req, res) => {
   try {
-    const { id_user, country, city, address, postal } = req.body;
-    
-    // Busca o último endereço cadastrado e define o novo id_address como (último + 1)
-    const lastAddress = await Address.findOne({}).sort({ id_address: -1 });
-    const newIdAddress = lastAddress && lastAddress.id_address ? lastAddress.id_address + 1 : 1;
-    
+    const { userId, country, city, address, postal } = req.body;
+
+    // Verificar se o utilizador existe
+    const userExists = await User.findById(userId);
+    if (!userExists) {
+      return res.status(404).json({ error: 'Utilizador não encontrado' });
+    }
+
     const newAddress = new Address({
-      id_address: newIdAddress,
-      id_user,
+      user: userId,
       country,
       city,
       address,
-      postal,
+      postal
     });
-    
+
     await newAddress.save();
-    
     return res.status(201).json(newAddress);
   } catch (error) {
-    console.error('Erro ao criar address:', error);
-    return res.status(500).json({ error: 'Erro ao criar address' });
+    console.error('Erro ao criar morada:', error);
+    return res.status(500).json({ error: 'Erro ao criar morada' });
   }
 };
 
+// Listar todas as moradas
 exports.getAllAddresses = async (req, res) => {
   try {
-    const addresses = await Address.find();
+    const addresses = await Address.find().populate('user');
     return res.json(addresses);
   } catch (error) {
-    console.error('Erro ao buscar addresses:', error);
-    return res.status(500).json({ error: 'Erro ao buscar addresses' });
+    console.error('Erro ao buscar moradas:', error);
+    return res.status(500).json({ error: 'Erro ao buscar moradas' });
   }
 };
 
+// Obter morada por ID
 exports.getAddressById = async (req, res) => {
   try {
     const { id } = req.params;
-    const address = await Address.findOne({ id_address: id });
+    const address = await Address.findById(id).populate('user');
     if (!address) {
-      return res.status(404).json({ error: 'Address não encontrado' });
+      return res.status(404).json({ error: 'Morada não encontrada' });
     }
     return res.json(address);
   } catch (error) {
-    console.error('Erro ao buscar address:', error);
-    return res.status(500).json({ error: 'Erro ao buscar address' });
+    console.error('Erro ao buscar morada:', error);
+    return res.status(500).json({ error: 'Erro ao buscar morada' });
   }
 };
 
+// Atualizar morada
 exports.updateAddress = async (req, res) => {
   try {
     const { id } = req.params;
-    // Permite atualizar somente os campos de endereço, sem interferir em id_address e id_user
     const { country, city, address, postal } = req.body;
-    const updatedAddress = await Address.findOneAndUpdate(
-      { id_address: id },
+
+    const updatedAddress = await Address.findByIdAndUpdate(
+      id,
       { country, city, address, postal },
       { new: true }
     );
+
     if (!updatedAddress) {
-      return res.status(404).json({ error: 'Address não encontrado' });
+      return res.status(404).json({ error: 'Morada não encontrada' });
     }
+
     return res.json(updatedAddress);
   } catch (error) {
-    console.error('Erro ao atualizar address:', error);
-    return res.status(500).json({ error: 'Erro ao atualizar address' });
+    console.error('Erro ao atualizar morada:', error);
+    return res.status(500).json({ error: 'Erro ao atualizar morada' });
   }
 };
 
+// Remover morada
 exports.deleteAddress = async (req, res) => {
   try {
     const { id } = req.params;
-    const deletedAddress = await Address.findOneAndDelete({ id_address: id });
+    const deletedAddress = await Address.findByIdAndDelete(id);
     if (!deletedAddress) {
-      return res.status(404).json({ error: 'Address não encontrado' });
+      return res.status(404).json({ error: 'Morada não encontrada' });
     }
-    return res.json({ message: 'Address deletado com sucesso' });
+    return res.json({ message: 'Morada removida com sucesso' });
   } catch (error) {
-    console.error('Erro ao deletar address:', error);
-    return res.status(500).json({ error: 'Erro ao deletar address' });
+    console.error('Erro ao deletar morada:', error);
+    return res.status(500).json({ error: 'Erro ao deletar morada' });
   }
 };
