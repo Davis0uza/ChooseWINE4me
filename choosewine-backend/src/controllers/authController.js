@@ -11,6 +11,7 @@ exports.loginWithFirebase = async (req, res) => {
 
   try {
     // 1. Verifica o token no Firebase
+    console.log('Recebido no backend:', req.body);
     const decoded = await admin.auth().verifyIdToken(idToken);
     const { uid, email, name } = decoded;
 

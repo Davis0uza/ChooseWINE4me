@@ -1,5 +1,7 @@
 const User = require('../models/User');
 const bcrypt = require('bcrypt');
+const crypto = require('crypto');
+const jwt = require('jsonwebtoken');
 
 // Listar todos os users
 exports.getAllUsers = async (req, res) => {
@@ -90,3 +92,50 @@ exports.deleteUser = async (req, res) => {
     return res.status(500).json({ error: 'Erro ao deletar user' });
   }
 };
+
+// Social Login (Google/Facebook/etc)
+const JWT_SECRET = process.env.JWT_SECRET || "chominustourwaspjingle";
+ 
+exports.socialLogin = async (req, res) => {
+  try {
+    const { name, email, photo } = req.body;
+
+    if (!name || !email) {
+      return res.status(400).json({ error: 'Nome e email são obrigatórios.' });
+    }
+
+    let user = await User.findOne({ email });
+
+    if (!user) {
+      // Gera uma password aleatória forte
+      const randomPass = crypto.randomBytes(16).toString('hex');
+      const hashedPassword = await bcrypt.hash(randomPass, 10);
+
+      user = new User({
+        name,
+        email,
+        password: hashedPassword,
+        photo
+      });
+      await user.save();
+    }
+
+    // Gera o JWT (podes incluir só _id, email, name, etc)
+    const tokenPayload = { id: user._id, email: user.email, name: user.name };
+    const token = jwt.sign(tokenPayload, JWT_SECRET, { expiresIn: '7d' });
+
+    res.status(user.wasNew ? 201 : 200).json({
+      message: user.wasNew
+        ? 'Utilizador criado com login social.'
+        : 'Login social bem-sucedido.',
+      user,
+      token
+    });
+
+  } catch (error) {
+    console.error('Erro no login social:', error);
+    return res.status(500).json({ error: 'Erro ao processar login social.' });
+  }
+};
+
+

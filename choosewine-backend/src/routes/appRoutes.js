@@ -8,6 +8,13 @@ const favoriteController = require('../controllers/favoriteController');
 const historyController = require('../controllers/historyController');
 const ratingController = require('../controllers/ratingController')
 const recommendController = require('../controllers/recommendController');
+const authController = require('../controllers/authController');
+
+
+// Autenticação com Firebase
+router.post('/auth/firebase', authController.loginWithFirebase);
+router.post('/auth/social-login', userController.socialLogin);
+
 
 /*const { verifyToken } = require('../middleware/authMiddleware'); 
 

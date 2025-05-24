@@ -1,21 +1,23 @@
 {
   "expo": {
-    "name": "ChooseWINE4me",
-    "slug": "choosewine4me",
+    "name": "choosewine",
+    "slug": "choosewine",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
-    "scheme": "choosewine4me",
+    "scheme": "choosewine",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true
     },
     "android": {
+      "package": "com.choosewine",
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      }
+      },
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "bundler": "metro",
@@ -32,10 +34,25 @@
           "resizeMode": "contain",
           "backgroundColor": "#ffffff"
         }
-      ]
+      ],
+      [
+        "@react-native-google-signin/google-signin",
+        {
+          "reservedClientId": "636405643444-ih548k700pnrl3jvrbnskq5h8a3dcead.apps.googleusercontent.com",
+          "iosUrlScheme": "com.googleusercontent.apps.636405643444-ih548k700pnrl3jvrbnskq5h8a3dcead"
+        }
+      ],
+      "expo-build-properties",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "68661eae-1bd9-4c6a-8f7a-01ad3b8a9b90"
+      }
     }
   }
 }

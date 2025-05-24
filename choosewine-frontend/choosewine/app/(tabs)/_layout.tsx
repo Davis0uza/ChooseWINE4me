@@ -1,4 +1,4 @@
-//_layout.tsx em frontend/app/(tabs)
+//app/(tabs)/_layout.tsx
 
 import { Tabs } from 'expo-router';
 import React from 'react';
@@ -22,7 +22,7 @@ export default function TabLayout() {
         tabBarBackground: TabBarBackground,
         tabBarStyle: Platform.select({
           ios: {
-            // Use a transparent background on iOS para mostrar o efeito de desfoque
+            // Use a transparent background on iOS to show the blur effect
             position: 'absolute',
           },
           default: {},
@@ -40,13 +40,6 @@ export default function TabLayout() {
         options={{
           title: 'Explore',
           tabBarIcon: ({ color }) => <IconSymbol size={28} name="paperplane.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="TestApiPage"
-        options={{
-          title: 'Test API',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="flask.fill" color={color} />,
         }}
       />
     </Tabs>
