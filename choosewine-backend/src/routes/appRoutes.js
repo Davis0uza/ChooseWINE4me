@@ -13,12 +13,11 @@ const authController = require('../controllers/authController');
 
 // Autenticação com Firebase
 router.post('/auth/firebase', authController.loginWithFirebase);
-router.post('/auth/social-login', userController.socialLogin);
 
 
-/*const { verifyToken } = require('../middleware/authMiddleware'); 
+const { verifyToken } = require('../middleware/authMiddleware'); 
 
-router.use(verifyToken);*/
+router.use(verifyToken);
 
 // Rotas para Users
 router.get('/users', userController.getAllUsers);

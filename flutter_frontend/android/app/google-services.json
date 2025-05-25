@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "1013089135904",
+    "project_id": "choosewine-d8c13",
+    "storage_bucket": "choosewine-d8c13.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1013089135904:android:6f6302191421aaf3e9bb45",
+        "android_client_info": {
+          "package_name": "com.zawwy.choosewine"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1013089135904-gl2hhfcqn5opb8u9j2vj7c6l28g5crjo.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.zawwy.choosewine",
+            "certificate_hash": "7c59e5b7d5b344708efa07374a55d8417e0c65b1"
+          }
+        },
+        {
+          "client_id": "1013089135904-umqldfdnm79thic4ia656cbk6lullqbd.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC4dBT_A_pZ2YJNnYyxVsqCWAAcHRTUbGc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1013089135904-umqldfdnm79thic4ia656cbk6lullqbd.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
