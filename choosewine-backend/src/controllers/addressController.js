@@ -91,3 +91,16 @@ exports.deleteAddress = async (req, res) => {
     return res.status(500).json({ error: 'Erro ao deletar morada' });
   }
 };
+
+// Listar moradas de um utilizador
+exports.getAddressesByUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const addresses = await Address.find({ user: userId });
+    return res.json(addresses);
+  } catch (error) {
+    console.error('Erro ao buscar moradas do utilizador:', error);
+    return res.status(500).json({ error: 'Erro ao buscar moradas do utilizador' });
+  }
+};
+
