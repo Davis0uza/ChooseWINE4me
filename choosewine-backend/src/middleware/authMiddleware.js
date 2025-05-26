@@ -4,6 +4,7 @@ const jwt = require('jsonwebtoken');
 exports.verifyToken = (req, res, next) => {
   // Obtém o header de autorização (esperado no formato "Bearer <token>")
   const authHeader = req.headers['authorization'];
+  console.log(req.headers.authorization);
   if (!authHeader) {
     return res.status(401).json({ error: 'Acesso negado: token não fornecido' });
   }
