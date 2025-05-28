@@ -12,7 +12,10 @@ const authController = require('../controllers/authController');
 
 
 // Autenticação com Firebase
+router.post('/users/register', userController.createUser);
 router.post('/auth/firebase', authController.loginWithFirebase);
+router.post('/auth/email',    authController.loginWithEmail); 
+router.get('/images/proxy', authController.proxyImage);
 
 
 const { verifyToken } = require('../middleware/authMiddleware'); 
@@ -22,7 +25,7 @@ router.use(verifyToken);
 // Rotas para Users
 router.get('/users', userController.getAllUsers);
 router.get('/users/:id', userController.getUserById);
-router.post('/users', userController.createUser);
+
 router.put('/users/:id', userController.updateUser);
 router.delete('/users/:id', userController.deleteUser);
 
