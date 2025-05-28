@@ -5,7 +5,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-import 'config.dart';
+import '../config.dart';
 
 class AuthService {
   AuthService._() {
@@ -106,8 +106,9 @@ class AuthService {
       if (jwtToken == null) {
         throw Exception('JWT não retornado pelo backend');
       }
-    
-      await _save('jwt_token', jwtToken);        
+
+      // GUARDA TUDO!
+      await _save('jwt_token', jwtToken);         // <---- ESSENCIAL!
       await _save(_keyMongoUserId, mongoId);
       await _save(_keyIdToken, idToken);
 

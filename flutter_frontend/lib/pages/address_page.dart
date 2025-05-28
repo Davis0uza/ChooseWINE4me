@@ -1,6 +1,7 @@
 // lib/pages/address_page.dart
 
 import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import '../services/auth_service.dart';
 import '../services/api_service.dart';
 import 'home_page.dart';
@@ -55,9 +56,10 @@ class _AddressPageState extends State<AddressPage> {
       if (!mounted) return;
 
       if (resp.statusCode == 201) {
+        final firebaseUser = FirebaseAuth.instance.currentUser!;
         Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => HomePage()),
+          MaterialPageRoute(builder: (_) => HomePage(user: firebaseUser)),
         );
       } else {
         throw Exception('Resposta inesperada: ${resp.statusCode}');

@@ -1,7 +1,6 @@
 import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:typed_data';
-import 'config.dart';
+import '../config.dart';
 
 class ApiService {
   ApiService._() {
@@ -44,54 +43,5 @@ class ApiService {
 
   Future<Response> deleteAddress(String id) {
     return _dio.delete('/addresses/$id');
-  }
-
-  Future<Response> registerUser({
-      required String name,
-      required String email,
-      required String password,
-    }) {
-      return _dio.post(
-        '/users/register',
-        data: {
-          'name': name,
-          'email': email,
-          'password': password,
-        },
-      );
-  }
-
-  Future<Response> loginWithEmail({
-  required String email,
-  required String password,
-  }) async {
-    final resp = await _dio.post(
-      '/auth/email',
-      data: {
-        'email': email,
-        'password': password,
-      },
-    );
-
-    // 🔒 Guarda em SharedPreferences
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setString('jwt_token', resp.data['token']);
-    await prefs.setString('mongo_user_id', resp.data['userId']);
-    await prefs.setString('user_name', resp.data['user']['name']);
-
-    return resp;
-  }
-
-  Future<Response> getAllWines() {
-    return _dio.get('/wines/');
-  }
-
- Future<Uint8List> fetchProxyImage(String originalUrl) async {
-    final resp = await _dio.get(
-      '/images/proxy',
-      queryParameters: {'url': originalUrl},
-      options: Options(responseType: ResponseType.bytes),
-    );
-    return resp.data as Uint8List;
   }
 }
