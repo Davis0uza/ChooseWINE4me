@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+import 'package:shared_preferences/shared_preferences.dart'; 
 import 'services/firebase_options.dart';
 import 'services/api_service.dart';
 import 'services/auth_service.dart';
@@ -12,12 +13,24 @@ import 'pages/login_email_page.dart';
 import 'pages/home_page.dart';
 
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-  await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+
+  // Se ainda não existe nenhum app Firebase, inicializa agora:
+  if (Firebase.apps.isEmpty) {
+    if (kIsWeb) {
+      // Web precisa das opções geradas pelo CLI
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
+      // opcional: persistência no web
+      await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
+    } else {
+      // Mobile (Android/iOS) usa google-services.json e auto-init nativo
+      await Firebase.initializeApp();
+    }
+  }
+
   runApp(const MyApp());
 }
 

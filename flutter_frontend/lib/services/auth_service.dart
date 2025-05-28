@@ -26,6 +26,7 @@ class AuthService {
 
   static const _keyIdToken = 'id_token';
   static const _keyMongoUserId = 'mongo_user_id';
+  static const _userName = 'user_name';
 
   /// Guarda no shared_preferences
   Future<void> _save(String key, String value) async {
@@ -63,17 +64,24 @@ class AuthService {
       final mongoId = body['userId'] as String?;
       final jwtToken = body['token'] as String?;
 
+      final data = resp.data as Map<String, dynamic>;
+      final user = data['user'] as Map<String, dynamic>;
+      final name = user['name'] as String? ?? '';
+
+
       if (mongoId == null) {
         throw Exception('mongoUserId não retornado pelo backend');
       }
       if (jwtToken == null) {
         throw Exception('JWT não retornado pelo backend');
       }
+      
 
       // GUARDA TUDO!
       await _save('jwt_token', jwtToken); 
       await _save(_keyMongoUserId, mongoId);
       await _save(_keyIdToken, idToken);
+      await _save(_userName, name);
 
       return userCredential.user;
     } else {
@@ -100,16 +108,24 @@ class AuthService {
       final mongoId = body['userId'] as String?;
       final jwtToken = body['token'] as String?;
 
+      final data = resp.data as Map<String, dynamic>;
+      final user = data['user'] as Map<String, dynamic>;
+      final name = user['name'] as String? ?? '';
+
       if (mongoId == null) {
         throw Exception('mongoUserId não retornado pelo backend');
       }
       if (jwtToken == null) {
         throw Exception('JWT não retornado pelo backend');
       }
+      
+
     
       await _save('jwt_token', jwtToken);        
       await _save(_keyMongoUserId, mongoId);
       await _save(_keyIdToken, idToken);
+      await _save(_userName, name);
+      
 
       // Autentica no Firebase
       final cred = GoogleAuthProvider.credential(idToken: idToken);
@@ -129,6 +145,7 @@ class AuthService {
     await prefs.remove(_keyIdToken);
     await prefs.remove(_keyMongoUserId);
     await prefs.remove('jwt_token');
+    await prefs.remove(_userName);
   }
 
   /// Lê o idToken guardado

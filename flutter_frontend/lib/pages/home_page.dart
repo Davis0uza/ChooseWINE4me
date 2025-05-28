@@ -1,23 +1,31 @@
 // lib/pages/home_page.dart
 import 'package:flutter/material.dart';
-import '../widgets/wine_list.dart';
+import 'wine_list_page.dart';
+import '../widgets/custom_navbar.dart';
 
-class HomePage extends StatefulWidget {
+class HomePage extends StatelessWidget {
   const HomePage({super.key});
 
   @override
-  State<HomePage> createState() => _HomePageState();
-}
-
-class _HomePageState extends State<HomePage> {
-  // ... carregamento de nome de usuário ...
-
-  @override
   Widget build(BuildContext context) {
-    // se quiser manter o appBar com nome:
     return Scaffold(
-      appBar: AppBar(title: Text('Bem-vindo!')),
-      body: const WineList(), 
+      appBar: CustomNavBar(),
+      body: Center(
+        child: ElevatedButton.icon(
+          icon: const Icon(Icons.explore),
+          label: const Text('Explorar'),
+          onPressed: () {
+            Navigator.of(context).push(
+              MaterialPageRoute(
+                builder: (_) => const WineListPage(
+                  title: 'Todos os Vinhos',
+                  fetchMethod: 'getAllWines',
+                ),
+              ),
+            );
+          },
+        ),
+      ),
     );
   }
 }
