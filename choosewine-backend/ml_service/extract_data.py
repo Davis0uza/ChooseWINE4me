@@ -30,7 +30,7 @@ df_fav = pd.DataFrame(fav_docs)
 if not df_fav.empty:
     df_fav['user'] = df_fav['user'].astype(str)
     df_fav['wine'] = df_fav['wine'].astype(str)
-    df_fav.to_csv('ml_service/data/favorites.csv', index=False)
+    df_fav.to_csv('data/favorites.csv', index=False)
     print(f"✓ Exportadas {len(df_fav)} linhas para data/favorites.csv")
 else:
     print("⚠️ Nenhum favorito encontrado no MongoDB.")
@@ -41,7 +41,7 @@ df_rat = pd.DataFrame(rat_docs)
 if not df_rat.empty:
     df_rat['user'] = df_rat['user'].astype(str)
     df_rat['wine'] = df_rat['wine'].astype(str)
-    df_rat.to_csv('ml_service/data/ratings.csv', index=False)
+    df_rat.to_csv('data/ratings.csv', index=False)
     print(f"✓ Exportadas {len(df_rat)} linhas para data/ratings.csv")
 else:
     print("⚠️ Nenhum rating encontrado no MongoDB.")

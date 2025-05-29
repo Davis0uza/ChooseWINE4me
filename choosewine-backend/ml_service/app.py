@@ -27,9 +27,9 @@ addr_col = db.addresses
 
 # --- Carrega dados de interação ---
 try:
-    df = pd.read_csv("ml_service/data/favorites.csv")
+    df = pd.read_csv("data/favorites.csv")
 except FileNotFoundError:
-    df = pd.read_csv("ml_service/data/ratings.csv")
+    df = pd.read_csv("data/ratings.csv")
 
 df['user'] = df['user'].astype(str)
 df['wine'] = df['wine'].astype(str)
@@ -88,7 +88,9 @@ def recommend_cf(user_id: str):
                 "name": vinho.get("name"),
                 "rating": vinho.get("rating"),
                 "type": vinho.get("type"),
-                "winery": vinho.get("winery")
+                "winery": vinho.get("winery"),
+                "price" : vinho.get("price"),
+                "country" : vinho.get("country")
             })
     return results
 
@@ -131,6 +133,8 @@ def recommend_fallback(user_id: str):
                 "rating": vinho.get("rating"),
                 "type": vinho.get("type"),
                 "winery": vinho.get("winery"),
+                "price" : vinho.get("price"),
+                "country" : vinho.get("country"),
                 "region_count": count
             })
     return results
@@ -147,7 +151,9 @@ def recommend_top_rated():
             "_id": str(v["_id"]),
             "name": v.get("name"),
             "rating": v.get("rating"),
-            "type": v.get("type")
+            "type": v.get("type"),
+            "price" : v.get("price"),
+            "country" : v.get("country")
         }
         for v in vinhos
     ]

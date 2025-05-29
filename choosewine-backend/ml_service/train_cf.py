@@ -8,8 +8,8 @@ from joblib import dump
 from pandas.errors import EmptyDataError
 
 # Caminhos dos CSVs
-fav_path = 'ml_service/data/favorites.csv'
-rat_path = 'ml_service/data/ratings.csv'
+fav_path = 'data/favorites.csv'
+rat_path = 'data/ratings.csv'
 
 # 1) Tenta ler favorites.csv
 try:
@@ -50,8 +50,8 @@ model = NearestNeighbors(metric='cosine', algorithm='brute')
 model.fit(mat)
 
 # 7) Salva modelo
-os.makedirs('ml_service/models', exist_ok=True)
-dump((model, user_ids, wine_ids), 'ml_service/models/model_cf.joblib')
+os.makedirs('models', exist_ok=True)
+dump((model, user_ids, wine_ids), 'models/model_cf.joblib')
 
 print(f"✓ Modelo treinado e salvo em models/model_cf.joblib")
 print(f"  • {len(user_ids)} users, {len(wine_ids)} vinhos")

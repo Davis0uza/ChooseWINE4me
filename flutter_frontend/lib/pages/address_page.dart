@@ -1,12 +1,12 @@
 // lib/pages/address_page.dart
-
 import 'package:flutter/material.dart';
-import '../services/auth_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
 import 'home_page.dart';
+import '../services/auth_service.dart';
 
 class AddressPage extends StatefulWidget {
-  const AddressPage({super.key});
+  const AddressPage({Key? key}) : super(key: key);
 
   @override
   State<AddressPage> createState() => _AddressPageState();
@@ -19,19 +19,55 @@ class _AddressPageState extends State<AddressPage> {
   final _addressCtrl = TextEditingController();
   final _postalCtrl  = TextEditingController();
 
-  bool _loading = false;
   final _authService = AuthService.instance;
 
+  bool _loading = true;
+  String? _error;
+
   @override
-  void dispose() {
-    _countryCtrl.dispose();
-    _cityCtrl.dispose();
-    _addressCtrl.dispose();
-    _postalCtrl.dispose();
-    super.dispose();
+  void initState() {
+    super.initState();
+    _checkAddresses();
   }
 
-  Future<void> _onSubmit() async {
+  Future<void> _checkAddresses() async {
+    try {
+      // 1) Recupera o userId diretamente do SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      final userId = prefs.getString('mongo_user_id');
+      if (userId == null) {
+        throw Exception('Usuário não identificado.');
+      }
+
+      // 2) Chama o endpoint de busca de endereços
+      final resp = await ApiService.instance.fetchAddresses(userId);
+      if (resp.statusCode == 200) {
+        final addresses = resp.data as List<dynamic>;
+        if (addresses.isNotEmpty) {
+          // Usuário já tem endereço cadastrado → vai para HomePage
+          if (mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => const HomePage()),
+            );
+          }
+          return;
+        }
+      } else {
+        throw Exception('Erro ao buscar endereços: ${resp.statusCode}');
+      }
+    } catch (e) {
+      _error = e.toString();
+    } finally {
+      if (mounted) {
+        setState(() {
+          _loading = false;
+        });
+      }
+    }
+  }
+
+ Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() => _loading = true);
@@ -74,10 +110,30 @@ class _AddressPageState extends State<AddressPage> {
 
   @override
   Widget build(BuildContext context) {
+    // Enquanto verifica endereços, mostra spinner
+    if (_loading) {
+      return const Scaffold(
+        body: Center(child: CircularProgressIndicator()),
+      );
+    }
+
+    // Se ocorreu erro, mostra mensagem
+    if (_error != null) {
+      return Scaffold(
+        body: Center(
+          child: Text(
+            _error!,
+            style: const TextStyle(color: Colors.red),
+          ),
+        ),
+      );
+    }
+
+    // Nenhum endereço cadastrado: exibe o formulário
     return Scaffold(
-      appBar: AppBar(title: const Text('Registar Morada')),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16),
+      appBar: AppBar(title: const Text('Cadastrar Endereço')),
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
           child: Column(

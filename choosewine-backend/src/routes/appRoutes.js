@@ -17,7 +17,11 @@ router.post('/auth/firebase', authController.loginWithFirebase);
 router.post('/auth/email',    authController.loginWithEmail); 
 router.get('/images/proxy', authController.proxyImage);
 
+// Recomendações
+router.get('/recommend/:userId', recommendController.getRecommendations);
 
+
+//Daqui para baixo todas a requisições necessitam Token
 const { verifyToken } = require('../middleware/authMiddleware'); 
 
 router.use(verifyToken);
@@ -70,7 +74,6 @@ router.get('/ratings/:id', ratingController.getRatingById);
 router.post('/ratings', ratingController.createRating);
 router.delete('/ratings/:id', ratingController.deleteRating);
 
-// Recomendações
-router.get('/recommend/:userId', recommendController.getRecommendations);
+
 
 module.exports = router;

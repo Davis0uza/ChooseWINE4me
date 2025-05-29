@@ -1,35 +1,26 @@
-// lib/services/auth_service.dart
-import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:dio/dio.dart';
+import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:dio/dio.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'config.dart';
+import '../services/firebase_options.dart';
 
 class AuthService {
-  AuthService._() {
-    _dio = Dio(BaseOptions(baseUrl: kBackendBaseUrl))
-      ..interceptors.add(LogInterceptor(requestBody: true, responseBody: true));
-  }
-  static final AuthService instance = AuthService._();
+  AuthService._();
+  static final instance = AuthService._();
 
-  late final Dio _dio;
-  final _google = GoogleSignIn(
-    scopes: ['openid', 'email'],
-    clientId: kIsWeb
-        ? '1013089135904-umqldfdnm79thic4ia656cbk6lullqbd.apps.googleusercontent.com'
-        : null,
-  );
-
+  final _dio = Dio(BaseOptions(baseUrl: 'http://192.168.0.118:3000'));
   final _fbAuth = FirebaseAuth.instance;
+  final _google = GoogleSignIn();
 
-  static const _keyIdToken = 'id_token';
   static const _keyMongoUserId = 'mongo_user_id';
-  static const _userName = 'user_name';
+  static const _keyJwtToken     = 'jwt_token';
+  static const _keyIdToken      = 'firebase_id_token';
+  static const _keyUserName     = 'user_name';
 
-  /// Guarda no shared_preferences
-  Future<void> _save(String key, String value) async {
+  Future<void> _save(String key, String? value) async {
+    if (value == null) return;
     final prefs = await SharedPreferences.getInstance();
     await prefs.setString(key, value);
   }
@@ -39,122 +30,62 @@ class AuthService {
     return prefs.getString(key);
   }
 
-  /// Login com Google + backend, guarda idToken, mongoUserId E JWT
+  Future<String?> get mongoUserId async => await _read(_keyMongoUserId);
+
+  /// Login multiplataforma (Web popup ou Mobile SSO), autentica no Firebase,
+  /// recolhe o Firebase ID token e envia ao backend.
+  /// Retorna o Firebase [User] ou `null` se cancelado.
   Future<User?> signInWithGoogle() async {
-    if (kIsWeb) {
-      // Novo fluxo web recomendado
-      final provider = GoogleAuthProvider();
-      final userCredential = await _fbAuth.signInWithPopup(provider);
-      final idToken = await userCredential.user?.getIdToken();
-
-      if (idToken == null) {
-        throw Exception('idToken Firebase não disponível');
-      }
-
-      // Chama backend para criar/validar utilizador e gerar MongoID
-      final resp = await _dio.post(
-        '/auth/firebase',
-        data: {'idToken': idToken},
+    // Garantir Firebase inicializado com suas opções
+    if (Firebase.apps.isEmpty) {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
       );
-      if (!(resp.statusCode == 200 || resp.statusCode == 201)) {
-        throw Exception('Erro no backend: ${resp.statusCode}');
-      }
+    }
 
-      final body = resp.data;
-      final mongoId = body['userId'] as String?;
-      final jwtToken = body['token'] as String?;
-
-      final data = resp.data as Map<String, dynamic>;
-      final user = data['user'] as Map<String, dynamic>;
-      final name = user['name'] as String? ?? '';
-
-
-      if (mongoId == null) {
-        throw Exception('mongoUserId não retornado pelo backend');
-      }
-      if (jwtToken == null) {
-        throw Exception('JWT não retornado pelo backend');
-      }
-      
-
-      // GUARDA TUDO!
-      await _save('jwt_token', jwtToken); 
-      await _save(_keyMongoUserId, mongoId);
-      await _save(_keyIdToken, idToken);
-      await _save(_userName, name);
-
-      return userCredential.user;
+    UserCredential userCred;
+    if (kIsWeb) {
+      // Web: popup nativo do FirebaseAuth
+      final provider = GoogleAuthProvider();
+      userCred = await _fbAuth.signInWithPopup(provider);
     } else {
-      // Fluxo original Mobile
+      // Mobile: fluxo GoogleSignIn + FirebaseAuth
       final googleUser = await _google.signIn();
       if (googleUser == null) return null;
-
-      final auth = await googleUser.authentication;
-      final idToken = auth.idToken;
-      if (idToken == null) {
-        throw Exception('idToken Google não disponível');
-      }
-
-      // Backend
-      final resp = await _dio.post(
-        '/auth/firebase',
-        data: {'idToken': idToken},
+      final googleAuth = await googleUser.authentication;
+      final credential = GoogleAuthProvider.credential(
+        idToken: googleAuth.idToken,
+        accessToken: googleAuth.accessToken,
       );
-      if (!(resp.statusCode == 200 || resp.statusCode == 201)) {
-        throw Exception('Erro no backend: ${resp.statusCode}');
-      }
-
-      final body = resp.data;
-      final mongoId = body['userId'] as String?;
-      final jwtToken = body['token'] as String?;
-
-      final data = resp.data as Map<String, dynamic>;
-      final user = data['user'] as Map<String, dynamic>;
-      final name = user['name'] as String? ?? '';
-
-      if (mongoId == null) {
-        throw Exception('mongoUserId não retornado pelo backend');
-      }
-      if (jwtToken == null) {
-        throw Exception('JWT não retornado pelo backend');
-      }
-      
-
-    
-      await _save('jwt_token', jwtToken);        
-      await _save(_keyMongoUserId, mongoId);
-      await _save(_keyIdToken, idToken);
-      await _save(_userName, name);
-      
-
-      // Autentica no Firebase
-      final cred = GoogleAuthProvider.credential(idToken: idToken);
-      await _fbAuth.signInWithCredential(cred);
-
-      return _fbAuth.currentUser;
+      userCred = await _fbAuth.signInWithCredential(credential);
     }
-  }
 
-  /// Desloga de tudo e limpa prefs
-  Future<void> signOut() async {
-    if (!kIsWeb) {
-      await _google.signOut();
+    // Pega o Firebase ID token (aud = chosewine-d8c13)
+    final firebaseIdToken = await userCred.user!.getIdToken();
+
+    // (DEBUG opcional) imprimir para verificar aud no jwt.io
+    // print('Firebase ID Token: $firebaseIdToken');
+
+    // Envia ao backend
+    final resp = await _dio.post(
+      '/auth/firebase',
+      data: {'idToken': firebaseIdToken},
+    );
+    if (resp.statusCode == null || resp.statusCode! < 200 || resp.statusCode! >= 300) {
+      throw Exception('Erro no backend: ${resp.statusCode}');
     }
-    await _fbAuth.signOut();
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.remove(_keyIdToken);
-    await prefs.remove(_keyMongoUserId);
-    await prefs.remove('jwt_token');
-    await prefs.remove(_userName);
-  }
 
-  /// Lê o idToken guardado
-  Future<String?> get idToken async {
-    return _read(_keyIdToken);
-  }
+    // Persiste dados recebidos do backend
+    final data     = resp.data as Map<String, dynamic>;
+    final mongoId  = data['userId']  as String;
+    final jwtToken = data['token']   as String;
+    final name     = (data['user'] as Map<String, dynamic>)['name'] as String? ?? '';
 
-  /// Lê o mongoUserId guardado
-  Future<String?> get mongoUserId async {
-    return _read(_keyMongoUserId);
+    await _save(_keyJwtToken, jwtToken);
+    await _save(_keyMongoUserId, mongoId);
+    await _save(_keyIdToken, firebaseIdToken);
+    await _save(_keyUserName, name);
+
+    return userCred.user;
   }
 }
