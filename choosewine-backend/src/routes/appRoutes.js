@@ -28,10 +28,12 @@ router.delete('/users/:id', userController.deleteUser);
 
 // Rotas para Addresses
 router.get('/addresses', addressController.getAllAddresses);
+router.get('/addresses/user/:userId', addressController.getAddressesByUser);
 router.get('/addresses/:id', addressController.getAddressById);
 router.post('/addresses', addressController.createAddress);
 router.put('/addresses/:id', addressController.updateAddress);
 router.delete('/addresses/:id', addressController.deleteAddress);
+
 
 
 // Rotas para Vinhos

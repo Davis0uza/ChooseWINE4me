@@ -2,11 +2,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import '../../services/auth_service.dart';
+import '../services/auth_service.dart';
+import '../services/api_service.dart';
 import 'home_page.dart';
 
 class AddressPage extends StatefulWidget {
-  const AddressPage({super.key});  // super parameter
+  const AddressPage({super.key});
 
   @override
   State<AddressPage> createState() => _AddressPageState();
@@ -18,8 +19,9 @@ class _AddressPageState extends State<AddressPage> {
   final _cityCtrl    = TextEditingController();
   final _addressCtrl = TextEditingController();
   final _postalCtrl  = TextEditingController();
-  final _authService = AuthService();
+
   bool _loading = false;
+  final _authService = AuthService.instance;
 
   @override
   void dispose() {
@@ -32,6 +34,7 @@ class _AddressPageState extends State<AddressPage> {
 
   Future<void> _onSubmit() async {
     if (!_formKey.currentState!.validate()) return;
+
     setState(() => _loading = true);
 
     try {
@@ -40,18 +43,17 @@ class _AddressPageState extends State<AddressPage> {
         throw Exception('ID de utilizador não encontrado.');
       }
 
-      final resp = await _authService.httpClient.post(
-        'http://192.168.36.112:3000/addresses',
-        data: {
-          'userId':  mongoUserId,
-          'country': _countryCtrl.text.trim(),
-          'city':    _cityCtrl.text.trim(),
-          'address': _addressCtrl.text.trim(),
-          'postal':  _postalCtrl.text.trim(),
-        },
-      );
+      final payload = {
+        'userId':  mongoUserId,
+        'country': _countryCtrl.text.trim(),
+        'city':    _cityCtrl.text.trim(),
+        'address': _addressCtrl.text.trim(),
+        'postal':  _postalCtrl.text.trim(),
+      };
 
-      if (!mounted) return; // 🚩
+      final resp = await ApiService.instance.createAddress(payload);
+
+      if (!mounted) return;
 
       if (resp.statusCode == 201) {
         final firebaseUser = FirebaseAuth.instance.currentUser!;
@@ -60,17 +62,15 @@ class _AddressPageState extends State<AddressPage> {
           MaterialPageRoute(builder: (_) => HomePage(user: firebaseUser)),
         );
       } else {
-        throw Exception('Código ${resp.statusCode}');
+        throw Exception('Resposta inesperada: ${resp.statusCode}');
       }
     } catch (e) {
-      if (!mounted) return; // 🚩
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('Erro ao gravar morada: $e')),
       );
     } finally {
-      if (mounted) {       // 🚩
-        setState(() => _loading = false);
-      }
+      if (mounted) setState(() => _loading = false);
     }
   }
 
