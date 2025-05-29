@@ -2,7 +2,7 @@
 
 import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
-import '../main.dart';
+import 'address_page.dart';
 
 class LoginPage extends StatefulWidget {
   const LoginPage({super.key});
@@ -11,7 +11,7 @@ class LoginPage extends StatefulWidget {
 }
 
 class _LoginPageState extends State<LoginPage> {
-  final _authService = AuthService.instance; // 👈 instância local
+  final _authService = AuthService();
   bool _loading = false;
   String? _error;
 
@@ -22,12 +22,12 @@ class _LoginPageState extends State<LoginPage> {
     });
 
     try {
-      final user = await _authService.signInWithGoogle();  // 👈 usa _authService
+      final user = await _authService.signInWithGoogle();
       if (user != null && mounted) {
-        Navigator.pushAndRemoveUntil(
+        // Navega diretamente para a página de registo de morada
+        Navigator.pushReplacement(
           context,
-          MaterialPageRoute(builder: (_) => const MyApp()),
-          (_) => false,
+          MaterialPageRoute(builder: (_) => const AddressPage()),
         );
       }
     } catch (e) {

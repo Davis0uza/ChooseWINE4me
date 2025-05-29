@@ -1,25 +1,26 @@
+// lib/main.dart
+
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 
-import 'firebase_options.dart';
-import 'services/api_service.dart';
+import 'firebase_options.dart';            // O teu ficheiro manual
 import 'services/auth_service.dart';
 import 'pages/login_page.dart';
 import 'pages/address_page.dart';
 import 'pages/home_page.dart';
 
-Future<void> main() async {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   if (kIsWeb) {
+    // Na Web, precisamos das opções geradas manualmente
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    await FirebaseAuth.instance.setPersistence(Persistence.LOCAL);
   } else {
+    // No Mobile, o plugin do Firebase já auto‐inicializa com google‐services.json
     await Firebase.initializeApp();
   }
 
@@ -41,67 +42,48 @@ class MyApp extends StatelessWidget {
 class AuthGate extends StatelessWidget {
   const AuthGate({super.key});
 
+  Future<Widget> _decideStartPage() async {
+    final authService = AuthService();
+    final firebaseUser = FirebaseAuth.instance.currentUser;
+    if (firebaseUser == null) {
+      return const LoginPage();
+    }
+
+    try {
+      final mongoId = await authService.mongoUserId;
+      final resp = await authService.httpClient.get(
+        'http://192.168.36.112:3000/addresses',
+        queryParameters: {'user': mongoId},
+      );
+      if (resp.statusCode == 200) {
+        final list = resp.data as List;
+        final hasAddress = list.any((addr) {
+          final u = addr['user'];
+          return (u is Map && u['_id'] == mongoId) || u == mongoId;
+        });
+        return hasAddress
+            ? HomePage(user: firebaseUser)
+            : const AddressPage();
+      }
+    } catch (_) {
+      // fallback
+    }
+    return HomePage(user: firebaseUser);
+  }
+
   @override
   Widget build(BuildContext context) {
-    return StreamBuilder<User?>(
-      stream: FirebaseAuth.instance.authStateChanges(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
+    return FutureBuilder<Widget>(
+      future: _decideStartPage(),
+      builder: (context, snap) {
+        if (snap.connectionState != ConnectionState.done) {
           return const Scaffold(
             body: Center(child: CircularProgressIndicator()),
           );
         }
-        final user = snapshot.data;
-        if (user == null) {
-          return const LoginPage();
-        }
-
-        // Usa o _id do MongoDB gravado em SharedPreferences!
-        return FutureBuilder<bool>(
-          future: _hasAddress(),
-          builder: (context, addressSnap) {
-            if (addressSnap.connectionState == ConnectionState.waiting) {
-              return const Scaffold(
-                body: Center(child: CircularProgressIndicator()),
-              );
-            }
-            if (addressSnap.hasError) {
-              return const AddressPage();
-            }
-            if (addressSnap.data == true) {
-              return HomePage(user: user);
-            } else {
-              return const AddressPage();
-            }
-          },
-        );
+        // Uma vez pronto, devolve a página calculada
+        return snap.data!;
       },
     );
-  }
-
-  // Busca o _id do MongoDB do utilizador e só faz request autenticada depois do JWT estar disponível
-  Future<bool> _hasAddress() async {
-    // 1. Lê o id do utilizador (MongoDB) gravado após login
-    final mongoId = await AuthService.instance.mongoUserId;
-    if (mongoId == null) {
-      debugPrint('mongoUserId ainda não disponível!');
-      return false;
-    }
-
-    // 2. Espera o JWT estar disponível antes de continuar!
-    for (int i = 0; i < 20; i++) {
-      final prefs = await SharedPreferences.getInstance();
-      final jwt = prefs.getString('jwt_token');
-      if (jwt != null && jwt.isNotEmpty) break;
-      await Future.delayed(const Duration(milliseconds: 100));
-    }
-
-    try {
-      final resp = await ApiService.instance.fetchAddresses(mongoId);
-      return resp.statusCode == 200 && (resp.data as List).isNotEmpty;
-    } catch (e) {
-      debugPrint('Erro ao verificar endereço: $e');
-      return false;
-    }
   }
 }
