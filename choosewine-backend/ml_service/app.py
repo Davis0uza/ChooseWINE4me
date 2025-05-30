@@ -1,159 +1,123 @@
-# ml_service/app.py
-
 import os
 from urllib.parse import urlparse
 from dotenv import load_dotenv
-from fastapi import FastAPI
-from pymongo import MongoClient
+from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+from pymongo import MongoClient
 import pandas as pd
 import numpy as np
 import scipy.sparse as sp
 from sklearn.neighbors import NearestNeighbors
 
-# --- Configuração .env e MongoDB ---
-env_path = os.path.abspath(os.path.join(os.path.dirname(__file__), '..', '.env'))
+# --- Carrega .env ---
+env_path = os.path.join(os.path.dirname(__file__), '..', '.env')
 load_dotenv(env_path)
 
+# --- MongoDB ---
 mongo_uri = os.getenv('MONGODB_URI')
+if not mongo_uri:
+    raise RuntimeError("MONGODB_URI não definido")
 client = MongoClient(mongo_uri)
 parsed = urlparse(mongo_uri)
-db_name = parsed.path.lstrip('/').split('?')[0]
-db = client[db_name]
+db = client[ parsed.path.lstrip('/').split('?')[0] ]
 
-wines_col = db.wines
-favs_col = db.favorites
-addr_col = db.addresses
+# --- Extrai interações ---
+favs = list(db.favorites.find({}, {'_id':0,'id_user':1,'id_wine':1}))
+if favs:
+    df_int = pd.DataFrame(favs)
+else:
+    rats = list(db.ratings.find({}, {'_id':0,'id_user':1,'id_wine':1}))
+    df_int = pd.DataFrame(rats)
 
-# --- Carrega dados de interação ---
-try:
-    df = pd.read_csv("data/favorites.csv")
-except FileNotFoundError:
-    df = pd.read_csv("data/ratings.csv")
+if df_int.empty:
+    raise RuntimeError("Nenhuma interação encontrada para treinar CF")
 
-df['user'] = df['user'].astype(str)
-df['wine'] = df['wine'].astype(str)
+# --- Normaliza tipos ---
+df_int['id_user'] = df_int['id_user'].astype(str)
+df_int['id_wine'] = df_int['id_wine'].astype(str)
 
-user_ids = sorted(df['user'].unique())
-wine_ids = sorted(df['wine'].unique())
-user_map = {u: i for i, u in enumerate(user_ids)}
-wine_map = {w: i for i, w in enumerate(wine_ids)}
+# --- Mapas e matriz esparsa ---
+user_ids = sorted(df_int['id_user'].unique())
+wine_ids = sorted(df_int['id_wine'].unique())
+user_map = {u:i for i,u in enumerate(user_ids)}
+wine_map = {w:i for i,w in enumerate(wine_ids)}
 
-rows = df['user'].map(user_map)
-cols = df['wine'].map(wine_map)
-data = np.ones(len(df), dtype=np.int8)
-interaction_matrix = sp.csr_matrix((data, (rows, cols)), shape=(len(user_ids), len(wine_ids)))
+rows = df_int['id_user'].map(user_map)
+cols = df_int['id_wine'].map(wine_map)
+data = np.ones(len(df_int), dtype=np.int8)
+interaction_matrix = sp.csr_matrix((data, (rows, cols)),
+                                   shape=(len(user_ids), len(wine_ids)))
 
-model = NearestNeighbors(metric='cosine', algorithm='brute')
-model.fit(interaction_matrix)
+# --- Modelos CF ---
+user_nn = NearestNeighbors(metric='cosine', algorithm='brute')
+user_nn.fit(interaction_matrix)
+item_nn = NearestNeighbors(metric='cosine', algorithm='brute')
+item_nn.fit(interaction_matrix.T)
 
-# --- API FastAPI ---
 app = FastAPI()
+class RecRequest(BaseModel):
+    user_id: str
 
 @app.get("/recommend/{user_id}")
-async def recommend(user_id: str):
-    recommendations = recommend_cf(user_id)
+async def recommend_get(user_id: str):
+    return _recommend(user_id)
 
-    if not recommendations:
-        print("🔄 Nenhuma recomendação CF — aplicando fallback…")
-        recommendations = recommend_fallback(user_id)
+@app.post("/recommend")
+async def recommend_post(req: RecRequest):
+    return _recommend(req.user_id)
 
-    return recommendations
+def _recommend(user_id: str):
+    recs = []
+    consumed = set(df_int[df_int['id_user']==user_id]['id_wine'])
 
+    # Usuário com histórico
+    if user_id in user_map:
+        # para cada vinho consumido, pega todos similares
+        for wid in consumed:
+            idx = wine_map[wid]
+            _, idxs = item_nn.kneighbors(interaction_matrix.T[idx],
+                                         n_neighbors=len(wine_ids))
+            for sim_idx in idxs[0]:
+                wid_sim = wine_ids[sim_idx]
+                if wid_sim not in consumed and wid_sim not in recs:
+                    recs.append(wid_sim)
 
-def recommend_cf(user_id: str):
-    if user_id not in user_map:
-        return []
+    # Usuário sem histórico
+    else:
+        addr = db.addresses.find_one({'id_user': user_id},
+                                     {'_id':0,'city':1})
+        region_recs = []
+        if addr and addr.get('city'):
+            city = addr['city']
+            pipeline = [
+                {'$match': {'city': city}},
+                {'$lookup': {
+                   'from': 'favorites',
+                   'localField': 'id_user',
+                   'foreignField': 'id_user',
+                   'as': 'fav'}},
+                {'$unwind': '$fav'},
+                {'$group': {'_id': '$fav.id_wine','count':{'$sum':1}}},
+                {'$sort': {'count': -1}}
+            ]
+            for doc in db.addresses.aggregate(pipeline):
+                region_recs.append(str(doc['_id']))
+        recs = region_recs
 
-    uid = user_map[user_id]
-    neigh_dist, neigh_idx = model.kneighbors(interaction_matrix[uid], n_neighbors=min(len(user_ids), 6))
-    neigh_idx = neigh_idx[0].tolist()
-    neigh_idx = [i for i in neigh_idx if i != uid]
-
-    neigh_matrix = interaction_matrix[neigh_idx]
-    counts = np.asarray(neigh_matrix.sum(axis=0)).ravel()
-    consumed = set(df[df['user'] == user_id]['wine'])
-
-    results = []
-    for wine_idx in np.argsort(-counts):
-        if counts[wine_idx] <= 0:
-            break
-        wine_id = wine_ids[wine_idx]
-        if wine_id in consumed:
+    # Fallback complementar: similaridade aos já sugeridos
+    fill = []
+    for wid in recs:
+        if wid not in wine_map:
             continue
-        vinho = wines_col.find_one({"_id": wine_id})
-        if vinho:
-            results.append({
-                "_id": str(vinho["_id"]),
-                "name": vinho.get("name"),
-                "rating": vinho.get("rating"),
-                "type": vinho.get("type"),
-                "winery": vinho.get("winery"),
-                "price" : vinho.get("price"),
-                "country" : vinho.get("country")
-            })
-    return results
+        idx = wine_map[wid]
+        _, idxs = item_nn.kneighbors(interaction_matrix.T[idx],
+                                     n_neighbors=len(wine_ids))
+        for sim_idx in idxs[0]:
+            wid_sim = wine_ids[sim_idx]
+            if (wid_sim not in consumed
+               and wid_sim not in recs
+               and wid_sim not in fill):
+                fill.append(wid_sim)
+    recs.extend(fill)
 
-
-def recommend_fallback(user_id: str):
-    # 1. Obter cidade do utilizador
-    morada = addr_col.find_one({"user": user_id})
-    if not morada or "city" not in morada:
-        return recommend_top_rated()
-
-    cidade = morada["city"]
-    # 2. Buscar todos os utilizadores dessa cidade
-    user_ids_same_city = [
-        str(a["user"]) for a in addr_col.find({"city": cidade}, {"user": 1})
-    ]
-
-    if not user_ids_same_city:
-        return recommend_top_rated()
-
-    # 3. Buscar favoritos desses utilizadores
-    favs = list(favs_col.find({"user": {"$in": user_ids_same_city}}, {"wine": 1}))
-    if not favs:
-        return recommend_top_rated()
-
-    wine_freq = {}
-    for f in favs:
-        wine_id = str(f["wine"])
-        wine_freq[wine_id] = wine_freq.get(wine_id, 0) + 1
-
-    # Ordena por frequência
-    ordered = sorted(wine_freq.items(), key=lambda x: -x[1])
-
-    results = []
-    for wine_id, count in ordered:
-        vinho = wines_col.find_one({"_id": wine_id})
-        if vinho:
-            results.append({
-                "_id": str(vinho["_id"]),
-                "name": vinho.get("name"),
-                "rating": vinho.get("rating"),
-                "type": vinho.get("type"),
-                "winery": vinho.get("winery"),
-                "price" : vinho.get("price"),
-                "country" : vinho.get("country"),
-                "region_count": count
-            })
-    return results
-
-
-def recommend_top_rated():
-    vinhos = list(wines_col.find())
-    vinhos.sort(
-        key=lambda v: (v.get("rating", 0), favs_col.count_documents({"wine": v["_id"]})),
-        reverse=True
-    )
-    return [
-        {
-            "_id": str(v["_id"]),
-            "name": v.get("name"),
-            "rating": v.get("rating"),
-            "type": v.get("type"),
-            "price" : v.get("price"),
-            "country" : v.get("country")
-        }
-        for v in vinhos
-    ]
+    return recs

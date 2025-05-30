@@ -22,9 +22,10 @@ router.get('/recommend/:userId', recommendController.getRecommendations);
 
 
 //Daqui para baixo todas a requisições necessitam Token
+/*
 const { verifyToken } = require('../middleware/authMiddleware'); 
 
-router.use(verifyToken);
+router.use(verifyToken);*/
 
 // Rotas para Users
 router.get('/users', userController.getAllUsers);
@@ -64,7 +65,7 @@ router.delete('/favorites/:id', favoriteController.deleteFavorite);
 
 // Rotas para Histórico
 router.post('/history', historyController.createOrUpdateHistory); // adiciona ou atualiza
-router.get('/history/:userId', historyController.getUserHistory); // obter os 10 últimos
+router.get('/history/:userId', historyController.getUserHistory); 
 router.put('/history/:id', historyController.updateHistory);      // atualizar manualmente
 router.delete('/history/:id', historyController.deleteHistory);   // remover
 
