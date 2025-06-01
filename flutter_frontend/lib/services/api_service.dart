@@ -86,6 +86,10 @@ class ApiService {
     return _dio.get('/wines/');
   }
 
+   Future<Response> getWineries() {
+    return _dio.get('/wines/wineries');
+  }
+
  Future<Uint8List> fetchProxyImage(String originalUrl) async {
     final resp = await _dio.get(
       '/images/proxy',

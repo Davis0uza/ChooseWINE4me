@@ -21,11 +21,10 @@ router.get('/images/proxy', authController.proxyImage);
 router.get('/recommend/:userId', recommendController.getRecommendations);
 
 
-//Daqui para baixo todas a requisições necessitam Token
-/*
+
 const { verifyToken } = require('../middleware/authMiddleware'); 
 
-router.use(verifyToken);*/
+router.use(verifyToken);
 
 // Rotas para Users
 router.get('/users', userController.getAllUsers);

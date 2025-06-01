@@ -1,25 +1,41 @@
+// authMiddleware.js
+
+require('dotenv').config();
 const jwt = require('jsonwebtoken');
 
-// Middleware para verificar o token de autenticação
-exports.verifyToken = (req, res, next) => {
-  // Obtém o header de autorização (esperado no formato "Bearer <token>")
-  const authHeader = req.headers['authorization'];
-  console.log(req.headers.authorization);
+const INTERNAL_SERVICE_KEY = process.env.INTERNAL_SERVICE_KEY;  // chave secreta fixa
+
+/**
+ * Middleware de autenticação:
+ * 1) Se vier o header X-Service-Key correto, libera o request sem JWT
+ * 2) Caso contrário, exige um Bearer token JWT válido
+ */
+function verifyToken(req, res, next) {
+  // 1) Bypass com chave interna
+  const serviceKey = req.header('x-service-key');
+  if (serviceKey && serviceKey === INTERNAL_SERVICE_KEY) {
+    return next();
+  }
+
+  // 2) Verifica header Authorization
+  const authHeader = req.header('authorization');
   if (!authHeader) {
     return res.status(401).json({ error: 'Acesso negado: token não fornecido' });
   }
-  const token = authHeader.split(' ')[1];
-  if (!token) {
-    return res.status(401).json({ error: 'Acesso negado: token inválido' });
+
+  const parts = authHeader.split(' ');
+  if (parts.length !== 2 || parts[0] !== 'Bearer') {
+    return res.status(401).json({ error: 'Acesso negado: formato de token inválido' });
   }
-  
+
+  const token = parts[1];
   try {
-    // Verifica o token usando a chave secreta (configure JWT_SECRET no .env)
-    const verified = jwt.verify(token, process.env.JWT_SECRET || 'defaultsecret');
-    // Adiciona os dados do token na requisição para uso posterior
-    req.user = verified;
-    next();
+    const payload = jwt.verify(token, process.env.JWT_SECRET);
+    req.user = payload;
+    return next();
   } catch (err) {
-    return res.status(400).json({ error: 'Token inválido' });
+    return res.status(403).json({ error: 'Token inválido ou expirado' });
   }
-};
+}
+
+module.exports = { verifyToken };

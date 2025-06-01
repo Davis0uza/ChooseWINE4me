@@ -3,10 +3,11 @@
 Serviço FastAPI para recomendação de vinhos via HTTP usando Node.js como fonte de dados.
 Algoritmo:
 1) Usuários com histórico (favoritos ou ratings):
-   - Exclui vinhos já consumidos e recomenda todos os demais ordenados por similaridade de atributos (preço, nota, país e região).
+   - Exclui vinhos já consumidos e recomenda todos os demais ordenados por similaridade de atributos.
 2) Usuários sem histórico:
-   - Identifica cidade do usuário via endpoint específico (que retorna lista ou dict)
-   - Recomenda peers na mesma cidade primeiro, em seguida os restantes ordenados por similaridade.
+   - Identifica cidade do usuário via endpoint dedicado.
+   - Reúne vinhos consumidos por peers na mesma cidade.
+   - Em seguida, recomenda os demais ordenados por similaridade.
 """
 import os
 from fastapi import FastAPI, HTTPException
@@ -32,20 +33,16 @@ app = FastAPI()
 class RecRequest(BaseModel):
     user_id: str
 
-# Extrai interações de favorites ou ratings
-# Lida com estrutura de JSON aninhado
-
+# Extrai interações de JSON (aninhados)
 def extract_interactions(data):
     rows = []
     for it in data:
-        # user id
         uid = None
         if 'user' in it:
             u = it['user']
             uid = u.get('_id') if isinstance(u, dict) else u
         elif 'id_user' in it:
             uid = it.get('id_user')
-        # wine id
         wid = None
         if 'wine' in it:
             w = it['wine']
@@ -56,12 +53,11 @@ def extract_interactions(data):
             rows.append({'id_user': str(uid), 'id_wine': str(wid)})
     return pd.DataFrame(rows)
 
-# Carrega interações do backend (favoritos + ratings)
-
+# Carrega favoritos + ratings
 def load_user_wines():
     dfs = []
-    for endpoint in ('favorites', 'ratings'):
-        r = requests.get(f"{NODE_API_URL}/{endpoint}")
+    for ep in ('favorites', 'ratings'):
+        r = requests.get(f"{NODE_API_URL}/{ep}")
         if r.ok and isinstance(r.json(), list):
             df = extract_interactions(r.json())
             if not df.empty:
@@ -70,32 +66,30 @@ def load_user_wines():
         return pd.concat(dfs, ignore_index=True).drop_duplicates()
     return pd.DataFrame(columns=['id_user','id_wine'])
 
-# Carrega endereços completos para fallback
+df_uw = load_user_wines()
 
+# Carrega endereços (última por usuário)
 def load_addresses():
     r = requests.get(f"{NODE_API_URL}/addresses")
     if not r.ok or not isinstance(r.json(), list):
         raise RuntimeError("Erro ao buscar addresses")
     df = pd.DataFrame(r.json())
-    # extrai id_user do campo user
     if 'id_user' not in df.columns and 'user' in df.columns:
-        sample = df.at[0,'user']
         df['id_user'] = df['user'].apply(lambda u: u.get('_id') if isinstance(u, dict) else u)
     df['id_user'] = df['id_user'].astype(str)
-    # mantém última address por usuário
     df_last = df.groupby('id_user').last().reset_index()
     if 'city' not in df_last.columns:
         raise RuntimeError("City não encontrada em addresses")
     return df_last[['id_user','city']]
 
-# Carrega cidade de um único usuário via endpoint dedicado
+df_addr = load_addresses()
 
+# Carrega cidade de um usuário específico
 def load_user_city(user_id: str) -> str:
     r = requests.get(f"{NODE_API_URL}/addresses/user/{user_id}")
     if not r.ok:
         raise RuntimeError(f"Endereço não encontrado para usuário {user_id}")
     data = r.json()
-    # pode ser dict ou lista com um item
     if isinstance(data, list) and data:
         item = data[-1]
     elif isinstance(data, dict):
@@ -107,39 +101,36 @@ def load_user_city(user_id: str) -> str:
         raise RuntimeError("Campo 'city' ausente na resposta de cidade")
     return city
 
-# Carrega vinhos e prepara modelo de similaridade
-
+# Carrega vinhos e treina kNN com múltiplos atributos
 def load_wines_and_model():
     r = requests.get(f"{NODE_API_URL}/wines")
     r.raise_for_status()
     df = pd.DataFrame(r.json())
-    # define id_wine
-    if '_id' in df.columns:
-        df['id_wine'] = df['_id'].astype(str)
-    else:
-        df['id_wine'] = df['id_wine'].astype(str)
-    # atributos
+    df['id_wine'] = df['_id'].astype(str)
+    # atributos básicos
     df['price'] = df.get('price', pd.Series(0, index=df.index)).fillna(0)
-    df['rating'] = df.get('rating', df.get('average_rating', pd.Series(0, index=df.index))).fillna(0)
+    df['rating'] = df.get('rating', pd.Series(0, index=df.index)).fillna(0)
     df['country'] = df.get('country', pd.Series('', index=df.index)).fillna('')
     df['region'] = df.get('region', pd.Series('', index=df.index)).fillna('')
-    # codifica
-    enc_c = LabelEncoder()
-    enc_r = LabelEncoder()
+    df['type'] = df.get('type', pd.Series('', index=df.index)).fillna('')
+    df['winery'] = df.get('winery', pd.Series('', index=df.index)).fillna('')
+    # codificação categórica
+    enc_c = LabelEncoder(); enc_r = LabelEncoder()
+    enc_t = LabelEncoder(); enc_w = LabelEncoder()
     df['country_enc'] = enc_c.fit_transform(df['country'])
     df['region_enc'] = enc_r.fit_transform(df['region'])
-    # kNN
-    X = df[['price','rating','country_enc','region_enc']].values
+    df['type_enc'] = enc_t.fit_transform(df['type'])
+    df['winery_enc'] = enc_w.fit_transform(df['winery'])
+    # matriz de features e kNN
+    X = df[['price','rating','country_enc','region_enc','type_enc','winery_enc']].values
     nn = NearestNeighbors(metric='cosine', algorithm='brute')
     nn.fit(X)
     return df, X, nn
 
 # Inicialização global
-df_uw = load_user_wines()
-df_addr = load_addresses()
 df_w, X_w, nn_w = load_wines_and_model()
 all_wine_ids = df_w['id_wine'].tolist()
-id_index = {w:i for i,w in enumerate(all_wine_ids)}
+id_index = {w: i for i, w in enumerate(all_wine_ids)}
 
 @app.get("/recommend/{user_id}")
 async def recommend_get(user_id: str):
@@ -155,13 +146,14 @@ async def recommend_post(req: RecRequest):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-# Função principal de recomendação
+# Lógica de recomendação
 def _recommend(user_id: str):
-    cons = df_uw[df_uw['id_user']==user_id]['id_wine'].tolist()
-    # usuário ativo
+    # Vinhos já consumidos
+    cons = df_uw[df_uw['id_user'] == user_id]['id_wine'].tolist()
+    # Caso usuário ativo
     if cons:
         rest = [w for w in all_wine_ids if w not in cons]
-        idx_rest = [id_index[w] for w in rest]
+        idx_rest = [id_index[w] for w in rest if w in id_index]
         idx_cons = [id_index[w] for w in cons if w in id_index]
         if idx_cons and idx_rest:
             dists = cosine_distances(X_w[idx_rest], X_w[idx_cons])
@@ -169,19 +161,19 @@ def _recommend(user_id: str):
             order = np.argsort(scores)
             return [rest[i] for i in order]
         return rest
-    # usuário novo: fallback por cidade
+    # Caso usuário sem histórico
     city = load_user_city(user_id)
-    peers = df_addr[df_addr['city']==city]['id_user'].tolist()
+    peers = df_addr[df_addr['city'] == city]['id_user'].tolist()
     region_wines = df_uw[df_uw['id_user'].isin(peers)]['id_wine'].unique().tolist()
     used = set(region_wines)
     rest = [w for w in all_wine_ids if w not in used]
     if region_wines and rest:
-        idx_rest = [id_index[w] for w in rest]
+        idx_rest = [id_index[w] for w in rest if w in id_index]
         idx_reg = [id_index[w] for w in region_wines if w in id_index]
         if idx_reg:
             dists = cosine_distances(X_w[idx_rest], X_w[idx_reg])
             scores = dists.min(axis=1)
             order = np.argsort(scores)
             return region_wines + [rest[i] for i in order]
-    # fallback geral: por rating
+    # Fallback geral: ordena por rating decrescente
     return df_w.sort_values('rating', ascending=False)['id_wine'].tolist()
