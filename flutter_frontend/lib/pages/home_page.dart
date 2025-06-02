@@ -4,7 +4,7 @@ import '../widgets/custom_navbar.dart';
 import '../widgets/wineries_dropdown.dart';
 
 class HomePage extends StatelessWidget {
-  const HomePage({Key? key}) : super(key: key);
+  const HomePage({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -27,6 +27,22 @@ class HomePage extends StatelessWidget {
                     builder: (_) => const WineListPage(
                       title: 'Todos os Vinhos',
                       fetchMethod: 'getAllWines',
+                    ),
+                  ),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            // Botão Explorar padrão (Todos os Vinhos)
+            ElevatedButton.icon(
+              icon: const Icon(Icons.wine_bar),
+              label: const Text('Sugere o vinho certo ( para mim )'),
+              onPressed: () {
+                Navigator.of(context).push(
+                  MaterialPageRoute(
+                    builder: (_) => const WineListPage(
+                      title: 'Recomendados',
+                      fetchMethod: 'recommend',
                     ),
                   ),
                 );

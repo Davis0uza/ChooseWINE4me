@@ -49,6 +49,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           // Botão de perfil com inicial do usuário
+          const SizedBox(width: 2),
           GestureDetector(
             onTap: _navigateHome,
             child: CircleAvatar(
@@ -81,6 +82,8 @@ class _CustomNavBarState extends State<CustomNavBar> {
               ),
             ),
           ),
+
+          const SizedBox(width: 2),
         ],
       ),
     );

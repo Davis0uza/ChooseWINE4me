@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../models/wine_model.dart';
 import '../widgets/wine_list.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class WineListPage extends StatefulWidget {
   final String title;
@@ -57,8 +58,8 @@ class _WineListPageState extends State<WineListPage> {
     switch (method) {
       case 'getAllWines':
         return _fetchAll();
-      case 'searchWines':
-        return _fetchSearch('');
+      case 'recommend':
+        return _recommend('');
       default:
         return _fetchAll();
     }
@@ -70,8 +71,13 @@ class _WineListPageState extends State<WineListPage> {
     return data.map((json) => Wine.fromJson(json)).toList();
   }
 
-  Future<List<Wine>> _fetchSearch(String query) async {
-    final resp = await ApiService.instance.getAllWines();
+  Future<List<Wine>> _recommend(String query) async {
+    final prefs = await SharedPreferences.getInstance();
+    final userId = prefs.getString('mongo_user_id');
+    if (userId == null) {
+        throw Exception('User não identificado.');
+      }
+    final resp = await ApiService.instance.reccomend(userId);
     final data = resp.data as List;
     return data.map((json) => Wine.fromJson(json)).toList();
   }

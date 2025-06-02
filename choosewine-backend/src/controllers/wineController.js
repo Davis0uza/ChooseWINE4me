@@ -88,57 +88,9 @@ exports.deleteWine = async (req, res) => {
   }
 };
 
+
+
 //PESQUISAS E FILTROS
-
-//Pesquisa por texto
-exports.searchWineByText = async (req, res) => {
-  try {
-    const { query } = req.query;
-    if (!query || query.trim() === '') {
-      return res.status(400).json({ error: 'É necessário fornecer um texto de pesquisa.' });
-    }
-
-    const normalized = query.trim().toLowerCase();
-
-    let mappedType = null;
-    if (['tinto'].includes(normalized)) mappedType = 'Red';
-    else if (['branco', 'verde'].includes(normalized)) mappedType = 'White';
-    else if (['rosé', 'rose'].includes(normalized)) mappedType = 'Rose';
-    else if (['espumante'].includes(normalized)) mappedType = 'Sparkling';
-    else if (['doce'].includes(normalized)) mappedType = 'Dessert';
-    else if (['fortificado'].includes(normalized)) mappedType = 'Fortified';
-
-    const regex = new RegExp(normalized, 'i');
-
-    // Base das condições
-    const queryConditions = [
-      { name: regex },
-      { winery: regex },
-      { country: regex },
-      { year: regex }
-    ];
-
-    // Campo especial: type
-    if (mappedType) {
-      queryConditions.push({ type: mappedType });
-    } else {
-      queryConditions.push({ type: regex });
-    }
-
-    // Campo especial: alcoholLevel (só se for número)
-    const numericValue = parseFloat(normalized.replace(',', '.'));
-    if (!isNaN(numericValue)) {
-      queryConditions.push({ alcoholLevel: numericValue });
-    }
-
-    const results = await Wine.find({ $or: queryConditions });
-
-    return res.json(results);
-  } catch (error) {
-    console.error('Erro na pesquisa de vinhos:', error);
-    return res.status(500).json({ error: 'Erro ao pesquisar vinhos' });
-  }
-};
 
 //Pesquisa por types
 exports.getWineTypes = async (req, res) => {

@@ -12,10 +12,13 @@ const authController = require('../controllers/authController');
 
 
 // Autenticação com Firebase
-router.post('/users/register', userController.createUser);
 router.post('/auth/firebase', authController.loginWithFirebase);
+// Registo e Login Email
+router.post('/users/register', userController.createUser)
 router.post('/auth/email',    authController.loginWithEmail); 
+//Pedidos autorizados pela proxy
 router.get('/images/proxy', authController.proxyImage);
+
 
 // Recomendações
 router.get('/recommend/:userId', recommendController.getRecommendations);

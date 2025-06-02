@@ -30,7 +30,7 @@ def load_env():
     """Carrega NODE_API_URL e API_SECRET_KEY de .env."""
     base = os.path.dirname(__file__)
     load_dotenv(os.path.join(base, '.env'))
-    url = os.getenv('NODE_API_URL', 'http://192.168.0.118:3000')
+    url = os.getenv('NODE_API_URL', 'http://192.168.151.206:3000')
     secret = os.getenv('API_SECRET_KEY', '')
     if not secret:
         raise RuntimeError("API_SECRET_KEY não configurada no .env")

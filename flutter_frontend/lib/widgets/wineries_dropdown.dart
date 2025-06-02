@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
+import '../pages/wineries_wines_page.dart';
 
 /// Widget que exibe um botão "Castas" com ícones e, ao ser pressionado,
 /// mostra/oculta uma lista flutuante de vinícolas (wineries).
@@ -87,10 +88,19 @@ class _CastasDropdownButtonState extends State<CastasDropdownButton> {
                   return ListView.builder(
                     itemCount: wineries.length,
                     itemBuilder: (context, index) {
+                      final wineryName = wineries[index];
                       return ListTile(
-                        title: Text(wineries[index]),
+                        title: Text(wineryName),
                         onTap: () {
-                          // Ação opcional ao selecionar uma casta
+                          // Navega para a página de vinhos da casta selecionada
+                          Navigator.of(context).push(
+                            MaterialPageRoute(
+                              builder: (_) => WineriesWinesPage(
+                                title: 'Vinhos de $wineryName',
+                                winery: wineryName,
+                              ),
+                            ),
+                          );
                         },
                       );
                     },

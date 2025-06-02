@@ -46,6 +46,10 @@ class ApiService {
     return _dio.delete('/addresses/$id');
   }
 
+  Future<Response> reccomend(String id) async{
+    return _dio.get('/recommend/$id');
+  }
+
   Future<Response> registerUser({
       required String name,
       required String email,
