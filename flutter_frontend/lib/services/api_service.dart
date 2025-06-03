@@ -29,6 +29,14 @@ class ApiService {
   static final ApiService instance = ApiService._();
   late final Dio _dio;
 
+  Future<Uint8List> fetchProxyImage(String originalUrl) async {
+    final resp = await _dio.get(
+      '/images/proxy',
+      queryParameters: {'url': originalUrl},
+      options: Options(responseType: ResponseType.bytes),
+    );
+    return resp.data as Uint8List;
+  }
 
   Future<Response> fetchAddresses(String userId) async {
     return _dio.get('/addresses/user/$userId');
@@ -90,16 +98,50 @@ class ApiService {
     return _dio.get('/wines/');
   }
 
-   Future<Response> getWineries() {
-    return _dio.get('/wines/wineries');
+  Future<Response> getWine(String id) async{
+    return _dio.get('/wines/$id');
   }
 
- Future<Uint8List> fetchProxyImage(String originalUrl) async {
-    final resp = await _dio.get(
-      '/images/proxy',
-      queryParameters: {'url': originalUrl},
-      options: Options(responseType: ResponseType.bytes),
-    );
-    return resp.data as Uint8List;
+  Future<Response> getWineries() {
+    return _dio.get('/wines/wineries');
   }
+  
+  Future<Response> createFavorite({
+    required String userId,
+    required String wineId,
+  }) {
+    return _dio.post(
+      '/favorites',
+      data: {
+        'user': userId,
+        'wineId': wineId,
+      },
+    );
+  }
+
+  Future<Response> getFavorites() {
+    return _dio.get('/favorites');
+  }
+
+  Future<Response> deleteFavorite(String id) {
+    return _dio.delete('/favorites/$id');
+  }
+
+  Future<Response> createHistory({
+    required String userId,
+    required String wineId,
+  }) {
+    return _dio.post(
+      '/history',
+      data: {
+        'userId': userId,
+        'wineId': wineId,
+      },
+    );
+  }
+
+  Future<Response> getRatings() {
+    return _dio.get('/ratings');
+  }
+
 }

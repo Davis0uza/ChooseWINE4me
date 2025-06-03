@@ -3,9 +3,9 @@
 """
 Serviço FastAPI para recomendação de vinhos via HTTP usando Node.js como fonte de dados.
 Algoritmo:
-1) Usuários com histórico (favoritos ou ratings):
+1) Users com histórico (favoritos ou ratings):
    - Exclui vinhos já consumidos e recomenda todos os demais ordenados por similaridade de atributos.
-2) Usuários sem histórico:
+2) Users sem histórico:
    - Identifica cidade do usuário via endpoint dedicado.
    - Reúne vinhos consumidos por peers na mesma cidade.
    - Em seguida, recomenda os demais ordenados por similaridade.

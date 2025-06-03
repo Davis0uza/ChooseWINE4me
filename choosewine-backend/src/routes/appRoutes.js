@@ -23,11 +23,9 @@ router.get('/images/proxy', authController.proxyImage);
 // Recomendações
 router.get('/recommend/:userId', recommendController.getRecommendations);
 
-
-
+//Middleware
 const { verifyToken } = require('../middleware/authMiddleware'); 
-
-router.use(verifyToken);
+router.use(verifyToken); //daqui para baixo todas as rotas necessitam de token
 
 // Rotas para Users
 router.get('/users', userController.getAllUsers);
@@ -44,11 +42,8 @@ router.post('/addresses', addressController.createAddress);
 router.put('/addresses/:id', addressController.updateAddress);
 router.delete('/addresses/:id', addressController.deleteAddress);
 
-
-
 // Rotas para Vinhos
 //pesquisa e filtros em vinhos
-router.get('/wines/search/text', wineController.searchWineByText);
 router.get('/wines/types', wineController.getWineTypes);
 router.get('/wines/wineries', wineController.getWineries);
 // Rotas para Vinhos...
@@ -66,10 +61,10 @@ router.put('/favorites/:id', favoriteController.updateFavorite);
 router.delete('/favorites/:id', favoriteController.deleteFavorite);
 
 // Rotas para Histórico
-router.post('/history', historyController.createOrUpdateHistory); // adiciona ou atualiza
-router.get('/history/:userId', historyController.getUserHistory); 
-router.put('/history/:id', historyController.updateHistory);      // atualizar manualmente
-router.delete('/history/:id', historyController.deleteHistory);   // remover
+router.get('/history/:userId', historyController.getUserHistory);
+router.post('/history', historyController.createOrUpdateHistory);  
+router.put('/history/:id', historyController.updateHistory);      
+router.delete('/history/:id', historyController.deleteHistory); 
 
 // Ratings
 router.get('/ratings', ratingController.getAllRatings);
