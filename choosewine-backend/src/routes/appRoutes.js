@@ -70,7 +70,9 @@ router.delete('/history/:id', historyController.deleteHistory);
 router.get('/ratings', ratingController.getAllRatings);
 router.get('/ratings/:id', ratingController.getRatingById);
 router.post('/ratings', ratingController.createRating);
+router.put('/ratings/:id', ratingController.updateRating);
 router.delete('/ratings/:id', ratingController.deleteRating);
+
 
 
 

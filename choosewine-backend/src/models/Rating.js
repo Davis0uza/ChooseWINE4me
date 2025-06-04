@@ -1,10 +1,27 @@
+// models/Rating.js
 const mongoose = require('mongoose');
 
 const RatingSchema = new mongoose.Schema({
-  user: { type: Number, required: true }, // ou podes mudar para ObjectId se usares _id no User
-  wine: { type: mongoose.Schema.Types.ObjectId, ref: 'Wine', required: true },
-  rating: { type: Number, required: true },
-  comment: { type: String }
+  user: {
+    type: mongoose.Schema.Types.ObjectId,  // MUDOU: agora é ObjectId
+    ref: 'User',                           // refere ao model User
+    required: true
+  },
+  wine: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Wine',
+    required: true
+  },
+  rating: {
+    type: Number,
+    required: true
+  },
+  comment: {
+    type: String
+  }
+},
+{
+  timestamps: true // opcional, caso queira createdAt/updatedAt
 });
 
 module.exports = mongoose.model('Rating', RatingSchema);

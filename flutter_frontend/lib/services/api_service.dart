@@ -144,4 +144,41 @@ class ApiService {
     return _dio.get('/ratings');
   }
 
+  Future<Response> createRating({
+  required String user,
+  required String wineId,
+  required double rating,
+  String? comment,
+  }) {
+    return _dio.post(
+      '/ratings',
+      data: {
+        'user': user,
+        'wineId': wineId,
+        'rating': rating,
+        if (comment != null && comment.isNotEmpty) 'comment': comment,
+      },
+    );
+  }
+
+  Future<Response> updateRating({
+  required String id,
+  required double rating,
+  String? comment,
+  }) {
+    return _dio.put(
+      '/ratings/$id',
+      data: {
+        'rating': rating,
+        if (comment != null && comment.isNotEmpty) 'comment': comment,
+      },
+    );
+  }
+
+  Future<Response> deleteRating({
+  required String id,
+  }) {
+    return _dio.delete('/ratings/$id');
+  }
+
 }

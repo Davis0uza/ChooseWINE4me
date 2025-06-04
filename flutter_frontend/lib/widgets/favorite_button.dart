@@ -1,4 +1,5 @@
 // lib/widgets/favorite_button.dart
+
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../services/api_service.dart';
@@ -17,6 +18,7 @@ class _FavoriteButtonState extends State<FavoriteButton> {
   String? _favoriteId;
   String? _userId;
   bool _loading = true;
+  bool _isSubmitting = false;
 
   @override
   void initState() {
@@ -37,30 +39,45 @@ class _FavoriteButtonState extends State<FavoriteButton> {
 
     try {
       final resp = await ApiService.instance.getFavorites();
-      final data = resp.data as List;
+      final data = (resp.data as List).cast<Map<String, dynamic>>();
+
+      String? foundFavId;
       for (var favJson in data) {
-        if (favJson['user'] == _userId && favJson['wineId'] == widget.wineId) {
-          setState(() {
-            _isFavorited = true;
-            _favoriteId = favJson['_id'] ?? favJson['id'];
-          });
-          break;
+        final rawUser = favJson['user'] as String?; // agora é String
+        final rawWine = favJson['wine'] as Map<String, dynamic>?;
+        if (rawUser != null && rawWine != null) {
+          final uid = rawUser;
+          final wid = rawWine['_id'] as String;
+          if (uid == _userId && wid == widget.wineId) {
+            foundFavId = favJson['_id'] as String;
+            break;
+          }
         }
       }
-    } catch (e) {
-      // Ignora erro ao buscar favoritos
-    } finally {
+
+      setState(() {
+        _favoriteId = foundFavId;
+        _isFavorited = foundFavId != null;
+        _loading = false;
+      });
+    } catch (_) {
       setState(() {
         _loading = false;
+        _isFavorited = false;
       });
     }
   }
 
   Future<void> _toggleFavorite() async {
-    if (_userId == null) return;
+    if (_userId == null || _isSubmitting) return;
 
-    if (!_isFavorited) {
-      try {
+    setState(() {
+      _isSubmitting = true;
+    });
+
+    try {
+      if (!_isFavorited) {
+        // ───── CRIAR FAVORITO ─────
         final resp = await ApiService.instance.createFavorite(
           userId: _userId!,
           wineId: widget.wineId,
@@ -68,21 +85,25 @@ class _FavoriteButtonState extends State<FavoriteButton> {
         final created = resp.data as Map<String, dynamic>;
         setState(() {
           _isFavorited = true;
-          _favoriteId = created['_id'] ?? created['id'];
+          _favoriteId = created['_id'] as String;
         });
-      } catch (e) {
-        // Lidar com erro de criação (opcional)
+      } else {
+        // ───── DELETAR FAVORITO ─────
+        if (_favoriteId != null) {
+          await ApiService.instance.deleteFavorite(_favoriteId!);
+          setState(() {
+            _isFavorited = false;
+            _favoriteId = null;
+          });
+        }
       }
-    } else {
-      if (_favoriteId == null) return;
-      try {
-        await ApiService.instance.deleteFavorite(_favoriteId!);
+    } catch (_) {
+      // opcional: mostrar feedback de erro
+    } finally {
+      if (mounted) {
         setState(() {
-          _isFavorited = false;
-          _favoriteId = null;
+          _isSubmitting = false;
         });
-      } catch (e) {
-        // Lidar com erro de deleção (opcional)
       }
     }
   }
@@ -91,23 +112,35 @@ class _FavoriteButtonState extends State<FavoriteButton> {
   Widget build(BuildContext context) {
     if (_loading) {
       return const SizedBox(
-        width: 48,
-        height: 48,
+        width: 40,
+        height: 40,
         child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
       );
     }
 
-    return OutlinedButton(
-      style: OutlinedButton.styleFrom(
-        side: BorderSide(color: Colors.purple.shade800),
-        shape: const CircleBorder(),
-        padding: const EdgeInsets.all(8),
-      ),
-      onPressed: _toggleFavorite,
-      child: Icon(
-        _isFavorited ? Icons.favorite : Icons.favorite_border,
-        color: Colors.purple.shade800,
-        size: 24,
+    // Decoração circular ao redor do ícone
+    return GestureDetector(
+      onTap: _toggleFavorite,
+      child: Container(
+        width: 40,
+        height: 40,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: _isFavorited
+              ? Colors.purple.withAlpha((0.1 * 255).round())
+              : Colors.transparent,
+          border: Border.all(
+            color: Colors.purple,
+            width: 1.5,
+          ),
+        ),
+        child: Center(
+          child: Icon(
+            _isFavorited ? Icons.favorite : Icons.favorite_border,
+            color: _isFavorited ? Colors.purple : Colors.purple,
+            size: 20,
+          ),
+        ),
       ),
     );
   }
