@@ -1,9 +1,12 @@
+// lib/widgets/wineries_dropdown.dart
+
 import 'package:flutter/material.dart';
 import '../services/api_service.dart';
 import '../pages/wineries_wines_page.dart';
 
-/// Widget que exibe um botão "Castas" com ícones e, ao ser pressionado,
-/// mostra/oculta uma lista flutuante de vinícolas (wineries).
+/// Este widget agora é um Column “inline”:
+/// 1) Exibe o botão principal “Vinícolas” (com ícone de taça de vinho).
+/// 2) Quando expandido, insere a lista logo abaixo, empurrando o que vier depois.
 class CastasDropdownButton extends StatefulWidget {
   const CastasDropdownButton({super.key});
 
@@ -18,10 +21,18 @@ class _CastasDropdownButtonState extends State<CastasDropdownButton> {
   @override
   void initState() {
     super.initState();
-    // Carrega lista de wineries (castas)
-    _wineriesFuture = ApiService.instance
-        .getWineries()
-        .then((resp) => List<String>.from(resp.data as List));
+    // Usa getWineries() do seu ApiService (que retorna Future<Response>)
+    // e converte em Future<List<String>>.
+    _wineriesFuture = ApiService.instance.getWineries().then((resp) {
+      if (resp.data is List) {
+        return List<String>.from(resp.data as List<dynamic>);
+      } else if (resp.data is Map<String, dynamic> &&
+                 resp.data['wineries'] is List) {
+        return List<String>.from((resp.data['wineries'] as List<dynamic>));
+      } else {
+        return <String>[];
+      }
+    });
   }
 
   @override
@@ -29,40 +40,43 @@ class _CastasDropdownButtonState extends State<CastasDropdownButton> {
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
-        ElevatedButton(
-          style: ElevatedButton.styleFrom(
-            backgroundColor:
-                _isExpanded ? Theme.of(context).primaryColorLight : null,
-          ),
-          onPressed: () => setState(() => _isExpanded = !_isExpanded),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(Icons.home),
-              const SizedBox(width: 4),
-              const Icon(Icons.local_bar),
-              const SizedBox(width: 8),
-              const Text('Castas'),
-              if (_isExpanded) ...[
-                const SizedBox(width: 8),
-                CircleAvatar(
-                  radius: 10,
-                  backgroundColor: Colors.grey.shade200,
-                  child: const Icon(
-                    Icons.close,
-                    size: 12,
-                    color: Colors.black,
-                  ),
-                ),
-              ],
-            ],
+        // ─────────────────────────────── BOTÃO PRINCIPAL ───────────────────────────────
+        SizedBox(
+          width: double.infinity,
+          height: 56,
+          child: OutlinedButton.icon(
+            onPressed: () {
+              setState(() {
+                _isExpanded = !_isExpanded;
+              });
+            },
+            icon: const Icon(
+              Icons.wine_bar,
+              color: Color(0xFF52335E),
+              size: 24,
+            ),
+            label: const Text(
+              'Vinícolas',
+              style: TextStyle(
+                fontSize: 18,
+                color: Color(0xFF52335E),
+                fontWeight: FontWeight.w600,
+              ),
+            ),
+            style: OutlinedButton.styleFrom(
+              side: const BorderSide(color: Color(0xFF52335E), width: 2),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(30),
+              ),
+              backgroundColor: Colors.transparent,
+            ),
           ),
         ),
+
+        // ──────────── AQUI, SE EXPANDIDO, INSERIMOS A LISTA “inline” ────────────
         if (_isExpanded)
           Container(
             margin: const EdgeInsets.only(top: 8),
-            width: 300,
-            height: 200,
             decoration: BoxDecoration(
               color: Colors.white,
               borderRadius: BorderRadius.circular(8),
@@ -74,33 +88,61 @@ class _CastasDropdownButtonState extends State<CastasDropdownButton> {
                 ),
               ],
             ),
+            // Limitamos altura para não estourar toda a tela
+            constraints: const BoxConstraints(maxHeight: 300),
             child: FutureBuilder<List<String>>(
               future: _wineriesFuture,
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
+                  return const Padding(
+                    padding: EdgeInsets.all(16),
+                    child: Center(child: CircularProgressIndicator()),
+                  );
                 } else if (snapshot.hasError) {
-                  return const Center(
-                    child: Text('Erro ao carregar castas'),
+                  return Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: Center(
+                      child: Text(
+                        'Erro ao carregar vinícolas',
+                        style: const TextStyle(color: Colors.red),
+                      ),
+                    ),
                   );
                 } else {
                   final wineries = snapshot.data!;
-                  return ListView.builder(
+                  if (wineries.isEmpty) {
+                    return const Padding(
+                      padding: EdgeInsets.all(16),
+                      child: Center(
+                        child: Text('Nenhuma vinícola encontrada'),
+                      ),
+                    );
+                  }
+                  return ListView.separated(
+                    padding: EdgeInsets.zero,
+                    shrinkWrap: true,
                     itemCount: wineries.length,
+                    separatorBuilder: (_, __) => const Divider(height: 1),
                     itemBuilder: (context, index) {
                       final wineryName = wineries[index];
                       return ListTile(
                         title: Text(wineryName),
                         onTap: () {
-                          // Navega para a página de vinhos da casta selecionada
-                          Navigator.of(context).push(
+                          // Ao selecionar, navegamos para a WineriesWinesPage,
+                          // usando exatamente os parâmetros obrigatórios.
+                          Navigator.push(
+                            context,
                             MaterialPageRoute(
                               builder: (_) => WineriesWinesPage(
-                                title: 'Vinhos de $wineryName',
+                                title: 'Vinícola: $wineryName',
                                 winery: wineryName,
                               ),
                             ),
                           );
+                          // Fecha o dropdown após a navegação
+                          setState(() {
+                            _isExpanded = false;
+                          });
                         },
                       );
                     },
@@ -109,6 +151,9 @@ class _CastasDropdownButtonState extends State<CastasDropdownButton> {
               },
             ),
           ),
+
+        // Adicionamos espaçamento extra para separar visualmente desta seção se necessário:
+        if (_isExpanded) const SizedBox(height: 16),
       ],
     );
   }
