@@ -207,7 +207,7 @@ class _LoginPageState extends State<LoginPage> {
     // LAYOUT PARA MOBILE (iOS/Android)
     // ------------------------------------------------------
     // Vamos usar 80% da largura total da tela para os botões
-    final double buttonWidthMobile = size.width * 0.6;
+    final double buttonWidthMobile = size.width * 0.5;
 
     return Scaffold(
       backgroundColor: Colors.white,

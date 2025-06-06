@@ -1,7 +1,12 @@
+// lib/pages/home_page.dart
+
 import 'package:flutter/material.dart';
 import 'wine_list_page.dart';
 import '../widgets/custom_navbar.dart';
 import '../widgets/wineries_dropdown.dart';
+// 1) Importa o WineFilterWidget
+import '../widgets/wine_filter_widget.dart';
+import 'filter_results_page.dart';
 
 class HomePage extends StatelessWidget {
   const HomePage({super.key});
@@ -11,11 +16,8 @@ class HomePage extends StatelessWidget {
     final size = MediaQuery.of(context).size;
 
     return Scaffold(
-      // Para que o body “se estenda por baixo” da AppBar, de modo
-      // que o fundo inicie já no topo do dispositivo:
+      // Para que o body “se estenda por baixo” da AppBar (ver imagem de fundo):
       extendBodyBehindAppBar: true,
-      // Substituímos a AppBar pelo CustomNavBar, mas precisamos
-      // que ele fique transparente para vermos a imagem por trás:
       appBar: PreferredSize(
         preferredSize: const Size.fromHeight(kToolbarHeight),
         child: Container(
@@ -26,7 +28,7 @@ class HomePage extends StatelessWidget {
 
       body: Stack(
         children: [
-          // 1) Container com imagem de fundo ocupando 30% da altura TOTAL
+          // 1) Fundo ocupando 30% da altura total
           Positioned(
             top: 0,
             left: 0,
@@ -36,134 +38,177 @@ class HomePage extends StatelessWidget {
               height: size.height * 0.30,
               decoration: const BoxDecoration(
                 image: DecorationImage(
-                  image: AssetImage('assets/images/fundo-login.jpg'),
+                  image: AssetImage('assets/images/fundo-home.jpg'),
                   fit: BoxFit.cover,
                 ),
               ),
             ),
           ),
 
-          // 2) Conteúdo principal abaixo (empurra a Column inteira para baixo
-          //    na mesma proporção de 30% para que não fique por trás da AppBar
-          //    nem sobreponha a parte do fundo que não deve ser coberta).
+          // 2) Espaço de 30% (para não ficar sobre o fundo) + conteúdo principal
           Column(
             children: [
-              // Criamos um espaçamento fixo de 30% para “sair” debaixo da imagem:
+              // Espaço fixo de 30%
               SizedBox(height: size.height * 0.30),
-              // A partir daqui, o restante dos widgets ocupa os 70% restantes:
+
+              // 3) Conteúdo principal (70% restante) agora é rolável
               Expanded(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      const SizedBox(height: 16),
+                  // ——> Aqui substituímos:
+                  //     child: Column( ... )
+                  //     por:
+                  child: SingleChildScrollView(
+                    physics: const BouncingScrollPhysics(),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      children: [
+                        const SizedBox(height: 16),
 
-                      // ─────────── WineriesDropdown ───────────
-                      // Mantemos exatamente o mesmo widget que você já tinha
-                      const CastasDropdownButton(),
-
-                      const SizedBox(height: 32),
-
-                      // ───────────── Botões ─────────────
-
-                      // 2.1) BOTÃO “Explorar” — contorno roxo, fundo transparente
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
+                        // ─── 3.1) WINE FILTER WIDGET (INCLUSÃO) ───────────────────
+                        // Inserimos o WineFilterWidget antes do dropdown de castas.
+                        WineFilterWidget(
+                          onSearch: ({
+                            required double minPrice,
+                            required double maxPrice,
+                            required double minRating,
+                            required double maxRating,
+                            String? wineType,
+                          }) {
+                            // Ao pressionar “Pesquisar” dentro do filtro,
+                            // navegamos para a FilterResultsPage
+                            Navigator.of(context).push(
                               MaterialPageRoute(
-                                builder: (_) => const WineListPage(
-                                  title: 'Explorar',
-                                  fetchMethod: 'explore',
+                                builder: (_) => FilterResultsPage(
+                                  minPrice: minPrice,
+                                  maxPrice: maxPrice,
+                                  minRating: minRating,
+                                  maxRating: maxRating,
+                                  wineType: wineType,
                                 ),
                               ),
                             );
                           },
-                          icon: const Icon(
-                            Icons.explore,
-                            color: Color(0xFF52335E),
-                            size: 24,
-                          ),
-                          label: const Text(
-                            'Explorar',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Color(0xFF52335E),
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(
-                              color: Color(0xFF52335E),
-                              width: 2,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            backgroundColor: Colors.transparent,
-                          ),
+                          // Você pode ajustar valores iniciais se desejar:
+                          initialMinPrice: 0,
+                          initialMaxPrice: 150,
+                          initialMinRating: 1,
+                          initialMaxRating: 5,
+                          initialWineType: null,
                         ),
-                      ),
 
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                      // 2.2) BOTÃO “Recomendados (para mim)” — fundo roxo, texto branco
-                      SizedBox(
-                        width: double.infinity,
-                        height: 56,
-                        child: OutlinedButton.icon(
-                          onPressed: () {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (_) => const WineListPage(
-                                  title: 'Recomendados (para mim)',
-                                  fetchMethod: 'recommend_for_me',
+                        // ─── 3.4) BOTÃO “Recomendados (para mim)” (original) ───────
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const WineListPage(
+                                    title: 'Recomendados (para mim)',
+                                    fetchMethod: 'recommend',
+                                  ),
                                 ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.local_bar,
+                              color: Colors.white,
+                              size: 24,
+                            ),
+                            label: const Text(
+                              'Recomendados (para mim)',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Colors.white,
+                                fontWeight: FontWeight.w600,
                               ),
-                            );
-                          },
-                          icon: const Icon(
-                            Icons.local_bar,
-                            color: Colors.white, // ícone branco sobre fundo roxo
-                            size: 24,
-                          ),
-                          label: const Text(
-                            'Recomendados (para mim)',
-                            style: TextStyle(
-                              fontSize: 18,
-                              color: Colors.white, // texto branco
-                              fontWeight: FontWeight.w600,
                             ),
-                          ),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(
-                              color: Color(0xFF52335E),
-                              width: 2,
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(
+                                color: Color(0xFF52335E),
+                                width: 2,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              backgroundColor: const Color(0xFF52335E),
                             ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(30),
-                            ),
-                            backgroundColor: const Color(0xFF52335E),
                           ),
                         ),
-                      ),
 
-                      const SizedBox(height: 16),
+                        const SizedBox(height: 16),
 
-                      // Se precisar de mais botões, basta seguir o padrão acima.
+                        // ─── 3.3) BOTÃO “Explorar” (igual ao original) ─────────────
+                        SizedBox(
+                          width: double.infinity,
+                          height: 56,
+                          child: OutlinedButton.icon(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (_) => const WineListPage(
+                                    title: 'Explorar',
+                                    fetchMethod: 'getAllWines',
+                                  ),
+                                ),
+                              );
+                            },
+                            icon: const Icon(
+                              Icons.explore,
+                              color: Color(0xFF52335E),
+                              size: 24,
+                            ),
+                            label: const Text(
+                              'Explorar',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: Color(0xFF52335E),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(
+                                color: Color(0xFF52335E),
+                                width: 2,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(30),
+                              ),
+                              backgroundColor: Colors.transparent,
+                            ),
+                          ),
+                        ),
 
-                      const Spacer(),
-                    ],
-                  ),
+                        const SizedBox(height: 16),
+
+                        
+                        // ─── 3.2) DROPDOWN DE CASTAS (MANTIDO COMO ESTAVA) ──────────
+                        const CastasDropdownButton(),
+
+                        
+
+                        const SizedBox(height: 16),
+
+                        // Se houver outros botões ou seções, basta replicar o padrão:
+                        // const SizedBox(height: 16),
+                        // OutroWidget(),
+                        // ...
+
+                        // ─── 3.5) “Espaço de segurança” para manter scroll fluido ─────
+                        const SizedBox(height: 24),
+                      ],
+                    ),
+                  ), // fim SingleChildScrollView
                 ),
-              ),
+              ), // fim Expanded
             ],
-          ),
+          ), // fim Column principal
         ],
       ),
     );

@@ -42,7 +42,7 @@ exports.loginWithFirebase = async (req, res) => {
     const token = jwt.sign(
       { _id: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' }
+      { expiresIn: '1d' }
     );
 
     // 6️⃣ devolve só o que precisas no cliente
@@ -97,7 +97,7 @@ exports.loginWithEmail = async (req, res) => {
     const token = jwt.sign(
       { _id: user._id, email: user.email },
       process.env.JWT_SECRET,
-      { expiresIn: '7d' },
+      { expiresIn: '1d' },
     );
 
     // 4️⃣ devolve o token e o mongoUid

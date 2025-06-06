@@ -328,7 +328,7 @@ class _AddressPageState extends State<AddressPage> {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text('Cadastrar Endereço'),
+        title: const Text('Registar Morada'),
         backgroundColor: const Color(0xFF52335E),
       ),
       body: SingleChildScrollView(

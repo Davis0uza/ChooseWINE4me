@@ -1,10 +1,9 @@
 // lib/widgets/custom_navbar.dart
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../pages/favorites_page.dart';
+import '../pages/profile_page.dart'; // Importa a nova página de perfil
 
-/// Navbar simples com fundo transparente e dois botões circulares:
-/// - Esquerda: inicial do usuário (extraída de SharedPreferences)
-/// - Direita: ícone de favoritos (navega para '/')
 class CustomNavBar extends StatefulWidget implements PreferredSizeWidget {
   const CustomNavBar({super.key});
 
@@ -16,7 +15,7 @@ class CustomNavBar extends StatefulWidget implements PreferredSizeWidget {
 }
 
 class _CustomNavBarState extends State<CustomNavBar> {
-  String _initial = '?';
+  String? _initial;
 
   @override
   void initState() {
@@ -26,17 +25,12 @@ class _CustomNavBarState extends State<CustomNavBar> {
 
   Future<void> _loadUserInitial() async {
     final prefs = await SharedPreferences.getInstance();
-    final name = prefs.getString('user_name') ?? '';
-    final trimmed = name.trim();
-    if (trimmed.isNotEmpty) {
-      setState(() {
-        _initial = trimmed[0].toUpperCase();
-      });
-    }
-  }
-
-  void _navigateHome() {
-    Navigator.of(context).pushNamed('/');
+    final String? name = prefs.getString('user_name');
+    setState(() {
+      _initial = (name != null && name.isNotEmpty)
+          ? name.trim()[0].toUpperCase()
+          : 'A';
+    });
   }
 
   @override
@@ -48,42 +42,53 @@ class _CustomNavBarState extends State<CustomNavBar> {
       title: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Botão de perfil com inicial do usuário
-          const SizedBox(width: 2),
+          // Botão de Perfil
           GestureDetector(
-            onTap: _navigateHome,
-            child: CircleAvatar(
-              radius: 18,
-              backgroundColor: const Color(0xFFEADFFD),
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const ProfilePage()),
+              );
+            },
+            child: Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: Colors.grey.shade200,
+              ),
+              alignment: Alignment.center,
               child: Text(
-                _initial,
+                _initial ?? '',
                 style: const TextStyle(
-                  color: Color(0xFF9B51E0),
+                  fontSize: 20,
                   fontWeight: FontWeight.bold,
+                  color: Color(0xFF9B51E0),
                 ),
               ),
             ),
           ),
 
-          // Botão de favoritos
+          // Botão de Favoritos
           GestureDetector(
-            onTap: _navigateHome,
+            onTap: () {
+              Navigator.of(context).push(
+                MaterialPageRoute(builder: (_) => const FavoritesPage()),
+              );
+            },
             child: Container(
-              width: 36,
-              height: 36,
+              width: 40,
+              height: 40,
               decoration: BoxDecoration(
-                color: const Color(0xFFEADFFD),
                 shape: BoxShape.circle,
+                color: Colors.grey.shade200,
               ),
               child: const Icon(
                 Icons.favorite_border,
                 color: Color(0xFF9B51E0),
-                size: 20,
+                size: 30,
               ),
             ),
           ),
-
-          const SizedBox(width: 2),
         ],
       ),
     );

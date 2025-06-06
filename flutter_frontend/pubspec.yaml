@@ -61,6 +61,7 @@ flutter:
   assets:
     - assets/images/wine-placeholder.png
     - assets/images/fundo-login.jpg
+    - assets/images/fundo-home.jpg
     - assets/images/logo-login.png
     - assets/images/web_light_sq_ctn@2x.png
   # The following line ensures that the Material Icons font is

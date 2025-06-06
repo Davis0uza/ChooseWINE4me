@@ -73,6 +73,10 @@ class ApiService {
       );
   }
 
+  Future<Response> getUserById(String userId) async {
+    return _dio.get('/users/$userId');
+  }
+
   Future<Response> loginWithEmail({
   required String email,
   required String password,
@@ -96,6 +100,10 @@ class ApiService {
 
   Future<Response> getAllWines() {
     return _dio.get('/wines/');
+  }
+
+  Future<Response> getWineTypes() {
+    return _dio.get('/wines/types');
   }
 
   Future<Response> getWine(String id) async{
