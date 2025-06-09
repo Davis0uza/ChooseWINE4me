@@ -10,7 +10,7 @@ class AuthService {
   AuthService._();
   static final instance = AuthService._();
 
-  final _dio = Dio(BaseOptions(baseUrl: 'http://192.168.163.163:3000'));
+  final _dio = Dio(BaseOptions(baseUrl: 'http://192.168.140.83:3000'));
   final _fbAuth = FirebaseAuth.instance;
   final _google = GoogleSignIn();
 

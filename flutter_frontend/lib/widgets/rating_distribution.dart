@@ -123,14 +123,14 @@ class _RatingDistributionState extends State<RatingDistribution> {
                       style: TextStyle(
                         fontSize: avgFontSize,
                         fontWeight: FontWeight.bold,
-                        color: Colors.purple,
+                        color: Color(0xFF69182D),
                       ),
                     ),
                     const SizedBox(width: 4),
                     Icon(
                       Icons.star,
                       size: starSize,
-                      color: Colors.purple,
+                      color: Color(0xFF69182D),
                     ),
                   ],
                 ),
@@ -152,7 +152,7 @@ class _RatingDistributionState extends State<RatingDistribution> {
                             ratingValue.toString(),
                             style: TextStyle(
                               fontSize: labelFontSize,
-                              color: Colors.purple,
+                              color: Color(0xFF69182D),
                               fontWeight: FontWeight.w600,
                             ),
                           ),
@@ -165,7 +165,7 @@ class _RatingDistributionState extends State<RatingDistribution> {
                                 width: barWidth,
                                 height: barHeight,
                                 decoration: BoxDecoration(
-                                  color: Colors.purple.withAlpha(50),
+                                  color: Color.fromARGB(255, 255, 219, 229),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),
@@ -174,7 +174,7 @@ class _RatingDistributionState extends State<RatingDistribution> {
                                 width: barWidth * proportion,
                                 height: barHeight,
                                 decoration: BoxDecoration(
-                                  color: Colors.purple,
+                                  color: Color(0xFF69182D),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                               ),

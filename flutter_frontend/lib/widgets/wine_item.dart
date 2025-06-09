@@ -6,75 +6,61 @@ import '../models/wine_model.dart';
 import '../services/api_service.dart';
 import '../pages/wine_detail_page.dart';
 
+/// Item de vinho com redesign minimal
 class WineItem extends StatefulWidget {
   final Wine wine;
-  const WineItem({super.key, required this.wine});
+  const WineItem({Key? key, required this.wine}) : super(key: key);
 
   @override
   State<WineItem> createState() => _WineItemState();
 }
 
 class _WineItemState extends State<WineItem> {
-  /// Ao tocar no item, primeiro adiciona ao histórico e depois navega
+  /// Ao tocar, registra histórico e navega
   Future<void> _onTap() async {
-    // 1) Pega o userId (mongo_user_id) das SharedPreferences
     final prefs = await SharedPreferences.getInstance();
     final userId = prefs.getString('mongo_user_id');
 
     if (userId != null) {
       try {
-        // 2) Cria o histórico chamando a API
         await ApiService.instance.createHistory(
           userId: userId,
           wineId: widget.wine.id,
         );
-      } catch (e) {
-        // Se falhar, apenas prossegue (você pode logar ou exibir um alerta opcional)
-      }
+      } catch (_) {}
     }
-
-    // IMPORTANTE: checa se o estado ainda está no widget tree
     if (!mounted) return;
-
-    // 3) Navega para a página de detalhes, passando o wine.id
     Navigator.of(context).push(
-      MaterialPageRoute(
-        builder: (_) => WineDetailPage(wineId: widget.wine.id),
-      ),
+      MaterialPageRoute(builder: (_) => WineDetailPage(wineId: widget.wine.id)),
     );
   }
 
   @override
   Widget build(BuildContext context) {
-    final filledStars = widget.wine.rating.round();
-    const maxStars = 5;
-
     return GestureDetector(
       onTap: _onTap,
-      child: Card(
-        margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        elevation: 2,
-        child: Padding(
-          padding: const EdgeInsets.all(12),
-          child: Row(children: [
-            // Coluna 1: imagem via proxy
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+        decoration: const BoxDecoration(
+          border: Border(bottom: BorderSide(color: Colors.grey, width: 1)),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            // Imagem via proxy
             SizedBox(
               width: 60,
               height: 120,
               child: widget.wine.imageUrl != null
                   ? FutureBuilder<Uint8List>(
-                      future:
-                          ApiService.instance.fetchProxyImage(widget.wine.imageUrl!),
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.done &&
-                            snapshot.hasData) {
-                          return Image.memory(snapshot.data!, fit: BoxFit.cover);
-                        } else if (snapshot.hasError) {
+                      future: ApiService.instance.fetchProxyImage(widget.wine.imageUrl!),
+                      builder: (context, snap) {
+                        if (snap.connectionState == ConnectionState.done && snap.hasData) {
+                          return Image.memory(snap.data!, fit: BoxFit.cover);
+                        } else if (snap.hasError) {
                           return const Center(child: Icon(Icons.error));
-                        } else {
-                          return const Center(child: CircularProgressIndicator());
                         }
+                        return const Center(child: CircularProgressIndicator());
                       },
                     )
                   : Container(
@@ -82,69 +68,84 @@ class _WineItemState extends State<WineItem> {
                       child: const Icon(Icons.local_drink, size: 32),
                     ),
             ),
+            const SizedBox(width: 16),
 
-            const SizedBox(width: 12),
-
-            // Coluna 2: dados do vinho (título, região, etc.)
+            // Info: nome, winery, país e preço (condicional)
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  // 1) Nome do vinho
+                  // Nome
                   Text(
                     widget.wine.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+                    style: Theme.of(context).textTheme.titleMedium,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                  // Winery (se não for 'N/A')
+                  if (widget.wine.winery.toUpperCase() != 'N/A') ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      widget.wine.winery,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: Color(0xFF69182D),
+                            fontStyle: FontStyle.italic,
+                          ),
+                      overflow: TextOverflow.ellipsis,
                     ),
-                  ),
+                  ],
+                  // País
                   const SizedBox(height: 4),
-
-                  // 2) Nome da casta (winery)
-                  Text(
-                    widget.wine.winery,
-                    style: const TextStyle(fontSize: 14, color: Colors.grey),
-                  ),
-                  const SizedBox(height: 4),
-
-                  // 3) País
                   Text(
                     widget.wine.country,
-                    style: const TextStyle(fontSize: 14),
-                  ),
-                  const SizedBox(height: 4),
-
-                  // 4) Estrelas de classificação
-                  Row(
-                    children: [
-                      for (int i = 0; i < maxStars; i++)
-                        Icon(
-                          i < filledStars ? Icons.star : Icons.star_border,
-                          color: Colors.purple,
-                          size: 16,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.grey[600],
                         ),
-                    ],
+                    overflow: TextOverflow.ellipsis,
                   ),
+                  // Preço (somente se > 0)
+                  if (widget.wine.price > 0) ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      '${widget.wine.price.toStringAsFixed(2)}€',
+                      style: const TextStyle(
+                        color: Color.fromARGB(255, 134, 45, 69),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),
 
-            // Coluna 3: preço com fundo roxo
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              decoration: BoxDecoration(
-                color: const Color(0xFF9B51E0),
-                borderRadius: BorderRadius.circular(16),
+            // Botão de rating
+            OutlinedButton(
+              onPressed: () {},
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFF69182D), width: 1.5),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(4)),
+                padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                backgroundColor: Colors.transparent,
               ),
-              child: Text(
-                '${widget.wine.price.toStringAsFixed(2)}€',
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w600,
-                ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    widget.wine.rating.toString(),
+                    style: const TextStyle(
+                      color: Color(0xFF69182D),
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(Icons.star, size: 16, color: Color(0xFF69182D)),
+                ],
               ),
             ),
-          ]),
+          ],
         ),
       ),
     );

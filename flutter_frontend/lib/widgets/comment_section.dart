@@ -127,7 +127,7 @@ class _CommentSectionState extends State<CommentSection> {
       children: List.generate(5, (i) {
         return Icon(
           i < ratingValue ? Icons.star : Icons.star_border,
-          color: Colors.purple,
+          color: Color(0xFF69182D),
           size: 16,
         );
       }),

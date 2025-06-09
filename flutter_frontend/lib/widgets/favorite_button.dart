@@ -127,17 +127,17 @@ class _FavoriteButtonState extends State<FavoriteButton> {
         decoration: BoxDecoration(
           shape: BoxShape.circle,
           color: _isFavorited
-              ? Colors.purple.withAlpha((0.1 * 255).round())
+              ? Color(0xFF69182D).withAlpha((0.1 * 255).round())
               : Colors.transparent,
           border: Border.all(
-            color: Colors.purple,
+            color: Color(0xFF69182D),
             width: 1.5,
           ),
         ),
         child: Center(
           child: Icon(
             _isFavorited ? Icons.favorite : Icons.favorite_border,
-            color: _isFavorited ? Colors.purple : Colors.purple,
+            color: _isFavorited ?  Color(0xFF69182D) : Color(0xFF69182D),
             size: 20,
           ),
         ),

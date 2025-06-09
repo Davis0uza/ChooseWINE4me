@@ -62,7 +62,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
                 style: const TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF9B51E0),
+                  color: Color(0xFF69182D),
                 ),
               ),
             ),
@@ -84,7 +84,7 @@ class _CustomNavBarState extends State<CustomNavBar> {
               ),
               child: const Icon(
                 Icons.favorite_border,
-                color: Color(0xFF9B51E0),
+                color: Color(0xFF69182D),
                 size: 30,
               ),
             ),

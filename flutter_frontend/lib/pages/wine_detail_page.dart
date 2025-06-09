@@ -129,7 +129,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
                   style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.purple.shade800,
+                    color: Color(0xFF69182D),
                   ),
                   textAlign: TextAlign.center,
                 ),
@@ -196,7 +196,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                color: Colors.purple.withAlpha(30),
+                                color: Color(0xFF69182D),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: WineInfoActions(wine: _wine!),
@@ -208,7 +208,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
                             Container(
                               padding: const EdgeInsets.all(16),
                               decoration: BoxDecoration(
-                                border: Border.all(color: Colors.purple.shade200),
+                                border: Border.all(color: Color.fromARGB(255, 111, 67, 79)),
                                 borderRadius: BorderRadius.circular(12),
                               ),
                               child: Column(
@@ -285,7 +285,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          color: Colors.purple.withAlpha(30),
+                          color: Color.fromARGB(106, 255, 64, 115),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: WineInfoActions(wine: _wine!),
@@ -297,7 +297,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
                       Container(
                         padding: const EdgeInsets.all(16),
                         decoration: BoxDecoration(
-                          border: Border.all(color: Colors.purple.shade200),
+                          border: Border.all(color: Color.fromARGB(152, 105, 24, 46)),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Column(
@@ -327,11 +327,11 @@ class _WineDetailPageState extends State<WineDetailPage> {
                       style: TextStyle(
                         fontSize: 20,
                         fontWeight: FontWeight.bold,
-                        color: Colors.purple.shade800,
+                        color: Color(0xFF69182D),
                       ),
                     ),
                     const SizedBox(width: 8),
-                    Icon(Icons.wine_bar, color: Colors.purple.shade800, size: 24),
+                    Icon(Icons.wine_bar, color: Color(0xFF69182D), size: 24),
                   ],
                 ),
 
@@ -341,7 +341,7 @@ class _WineDetailPageState extends State<WineDetailPage> {
                 Container(
                   padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
-                    border: Border.all(color: Colors.purple.shade200),
+                    border: Border.all(color: Color.fromARGB(255, 113, 84, 92)),
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: _isRecLoading

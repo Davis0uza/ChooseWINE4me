@@ -119,13 +119,13 @@ class _WineInfoActionsState extends State<WineInfoActions> {
             Text(
               _wineData.rating.toStringAsFixed(1),
               style: const TextStyle(
-                color: Colors.purple,
+                color: Color(0xFF69182D),
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
             ),
             const SizedBox(width: 4),
-            const Icon(Icons.star, size: 16, color: Colors.purple),
+            const Icon(Icons.star, size: 16, color: Color(0xFF69182D)),
           ],
         ),
         const SizedBox(height: 10),
@@ -155,7 +155,7 @@ class _WineInfoActionsState extends State<WineInfoActions> {
           Text(
             '€${_wineData.price.toStringAsFixed(2)}',
             style: TextStyle(
-              color: Colors.purple.shade800,
+              color: Color(0xFF69182D),
               fontSize: 14,
               fontWeight: FontWeight.bold,
             ),
@@ -171,17 +171,17 @@ class _WineInfoActionsState extends State<WineInfoActions> {
               onPressed: _openRatingForm,
               style: OutlinedButton.styleFrom(
                 side: BorderSide(
-                    color: _hasRated ? Colors.purple.shade800 : Colors.purple),
+                    color: _hasRated ? Color(0xFF69182D) : Color.fromARGB(255, 111, 56, 71)),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),
                 ),
                 backgroundColor:
-                    _hasRated ? Colors.purple.shade800 : Colors.transparent,
+                    _hasRated ? Color(0xFF69182D) : Colors.transparent,
               ),
               child: Text(
                 _hasRated ? 'Avaliado' : 'Avaliar',
                 style: TextStyle(
-                  color: _hasRated ? Colors.white : Colors.purple.shade800,
+                  color: _hasRated ? Colors.white : Color(0xFF69182D),
                   fontSize: 14,
                 ),
               ),

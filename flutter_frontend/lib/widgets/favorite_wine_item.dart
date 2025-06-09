@@ -131,7 +131,7 @@ class _FavoriteWineItemState extends State<FavoriteWineItem> {
                       for (int i = 0; i < maxStars; i++)
                         Icon(
                           i < filledStars ? Icons.star : Icons.star_border,
-                          color: Colors.purple,
+                          color: Color(0xFF69182D),
                           size: 16,
                         ),
                     ],

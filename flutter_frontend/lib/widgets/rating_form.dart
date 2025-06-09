@@ -106,7 +106,7 @@ class _RatingFormState extends State<RatingForm> {
           },
           child: Icon(
             filled ? Icons.star : Icons.star_border,
-            color: Colors.purple,
+            color: Color(0xFF69182D),
             size: 32,
           ),
         );
@@ -258,7 +258,7 @@ class _RatingFormState extends State<RatingForm> {
                   ElevatedButton(
                     onPressed: _isSubmitting ? null : _handleConfirm,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.purple.shade800,
+                      backgroundColor: Color(0xFF69182D),
                       shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8)),
                     ),

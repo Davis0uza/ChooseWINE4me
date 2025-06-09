@@ -58,7 +58,7 @@ class _WineFilterWidgetState extends State<WineFilterWidget> {
   String? _errorLoadingTypes;
 
   // Cor roxa principal
-  static const Color _purple = Color(0xFF52335E);
+  static const Color _purple = Color(0xFF69182D);
 
   @override
   void initState() {
@@ -104,7 +104,7 @@ class _WineFilterWidgetState extends State<WineFilterWidget> {
       margin: const EdgeInsets.symmetric(vertical: 8),
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(12),
-        side: const BorderSide(color: _purple, width: 2),
+        side: const BorderSide(color: _purple, width: 1.5),
       ),
       elevation: 2,
       child: Column(
@@ -293,7 +293,7 @@ class _WineFilterWidgetState extends State<WineFilterWidget> {
                         backgroundColor: Colors.transparent,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(30),
-                          side: const BorderSide(color: _purple, width: 2),
+                          side: const BorderSide(color: _purple, width: 1.5),
                         ),
                         elevation: 0,
                       ),

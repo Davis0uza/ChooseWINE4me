@@ -130,13 +130,13 @@ class HomePage extends StatelessWidget {
                             ),
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(
-                                color: Color(0xFF52335E),
-                                width: 2,
+                                color: Color(0xFF69182D),
+                                width: 1.5,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30),
                               ),
-                              backgroundColor: const Color(0xFF52335E),
+                              backgroundColor: const Color(0xFF69182D),
                             ),
                           ),
                         ),
@@ -161,21 +161,21 @@ class HomePage extends StatelessWidget {
                             },
                             icon: const Icon(
                               Icons.explore,
-                              color: Color(0xFF52335E),
+                              color: Color(0xFF69182D),
                               size: 24,
                             ),
                             label: const Text(
                               'Explorar',
                               style: TextStyle(
                                 fontSize: 18,
-                                color: Color(0xFF52335E),
+                                color: Color(0xFF69182D),
                                 fontWeight: FontWeight.w600,
                               ),
                             ),
                             style: OutlinedButton.styleFrom(
                               side: const BorderSide(
-                                color: Color(0xFF52335E),
-                                width: 2,
+                                color: Color(0xFF69182D),
+                                width: 1.5,
                               ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(30),

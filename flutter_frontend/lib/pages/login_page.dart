@@ -134,13 +134,13 @@ class _LoginPageState extends State<LoginPage> {
                           child: OutlinedButton.icon(
                             icon: const Icon(
                               Icons.email,
-                              color: Color(0xFF52335E),
+                              color: Color(0xFF69182D),
                             ),
                             label: const Text(
                               'Entrar com e-mail',
                               style: TextStyle(
                                 fontSize: 16,
-                                color: Color(0xFF52335E),
+                                color: Color(0xFF69182D),
                               ),
                             ),
                             onPressed: () {
@@ -153,7 +153,7 @@ class _LoginPageState extends State<LoginPage> {
                             },
                             style: OutlinedButton.styleFrom(
                               backgroundColor: Colors.white,
-                              side: const BorderSide(color: Color(0xFF52335E)),
+                              side: const BorderSide(color: Color(0xFF69182D)),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(4),
                               ),
@@ -185,7 +185,7 @@ class _LoginPageState extends State<LoginPage> {
                               'registre-se agora',
                               style: TextStyle(
                                 fontSize: 14,
-                                color: Color(0xFF52335E),
+                                color: Color(0xFF69182D),
                                 fontWeight: FontWeight.bold,
                                 decoration: TextDecoration.underline,
                               ),
@@ -203,21 +203,19 @@ class _LoginPageState extends State<LoginPage> {
       );
     }
 
-    // ------------------------------------------------------
-    // LAYOUT PARA MOBILE (iOS/Android)
-    // ------------------------------------------------------
-    // Vamos usar 80% da largura total da tela para os botões
-    final double buttonWidthMobile = size.width * 0.5;
+     // ------------------------------------------------------
+      // LAYOUT PARA MOBILE (iOS/Android) COM BOTÃO “Continuar com Google” A LA EMAIL
+      // ------------------------------------------------------
+      final double buttonWidthMobile = size.width * 0.5;
 
-    return Scaffold(
-      backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: Column(
+      return Scaffold(
+        // Remova o backgroundColor para não cobrir a imagem de fundo
+        body: Stack(
           children: [
-            // === IMAGEM DE FUNDO NO TOPO ===
+            // 1) IMAGEM DE FUNDO FULLSCREEN
             Container(
               width: double.infinity,
-              height: size.height * 0.5, // 50% da altura da tela
+              height: double.infinity,
               decoration: const BoxDecoration(
                 image: DecorationImage(
                   image: AssetImage('assets/images/fundo-login.jpg'),
@@ -226,131 +224,157 @@ class _LoginPageState extends State<LoginPage> {
               ),
             ),
 
-            const SizedBox(height: 24),
-
-            // === LOGOTIPO ABAIXO DO FUNDO ===
-            Image.asset(
-              'assets/images/logo-login.png',
-              width: size.width * 0.5, // 50% da largura da tela
-              fit: BoxFit.contain,
-            ),
-
-            const SizedBox(height: 24),
-
-            // === ÁREA DE ERRO E BOTÕES ===
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 32.0),
+            // 2) CONTEÚDO ANCORADO NA PARTE INFERIOR
+            SafeArea(
               child: Column(
-                mainAxisSize: MainAxisSize.min,
+                mainAxisAlignment: MainAxisAlignment.end,
                 children: [
-                  // Erro (se houver)
-                  if (_error != null) ...[
-                    Text(
-                      _error!,
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                    const SizedBox(height: 12),
-                  ],
-
-                  // === BOTÃO “Continue with Google” OFICIAL ===
-                  if (_loading)
-                    SizedBox(
-                      width: buttonWidthMobile,
-                      height: 50,
-                      child: const Center(
-                        child: CircularProgressIndicator(),
-                      ),
-                    )
-                  else
-                    Center(
-                      child: GestureDetector(
-                        onTap: _handleSignIn,
-                        child: Image.asset(
-                          'assets/images/web_light_sq_ctn@2x.png',
-                          width: buttonWidthMobile,
-                          height: 50,
-                          fit: BoxFit.contain,
-                        ),
-                      ),
-                    ),
-
-                  const SizedBox(height: 16),
-
-                  // === BOTÃO “Entrar com e-mail” ===
-                  Center(
-                    child: SizedBox(
-                      width: buttonWidthMobile,
-                      height: 50,
-                      child: OutlinedButton.icon(
-                        icon: const Icon(
-                          Icons.email,
-                          color: Color(0xFF52335E),
-                        ),
-                        label: const Text(
-                          'Entrar com e-mail',
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: Color(0xFF52335E),
-                          ),
-                        ),
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const LoginEmailPage(),
-                            ),
-                          );
-                        },
-                        style: OutlinedButton.styleFrom(
-                          backgroundColor: Colors.white,
-                          side: const BorderSide(color: Color(0xFF52335E)),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                        ),
-                      ),
-                    ),
+                  // === LOGOTIPO ===
+                  Image.asset(
+                    'assets/images/logo-login.png',
+                    width: size.width * 0.5,
+                    fit: BoxFit.contain,
                   ),
 
                   const SizedBox(height: 24),
 
-                  // === TEXTO “registre-se agora” ===
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      const Text(
-                        'Não tem conta? ',
-                        style: TextStyle(fontSize: 14, color: Colors.black54),
-                      ),
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (_) => const RegisterPage(),
+                  // === ÁREA COM ERRO + BOTÕES + LINK DE REGISTRO ===
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 32.0),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        // Mensagem de erro (se existir)
+                        if (_error != null) ...[
+                          Text(
+                            _error!,
+                            style: const TextStyle(color: Colors.red),
+                          ),
+                          const SizedBox(height: 12),
+                        ],
+
+                        // === BOTÃO “Continuar com Google” ===
+                        if (_loading)
+                          SizedBox(
+                            width: buttonWidthMobile,
+                            height: 50,
+                            child: const Center(
+                              child: CircularProgressIndicator(),
                             ),
-                          );
-                        },
-                        child: const Text(
-                          'registre-se agora',
-                          style: TextStyle(
-                            fontSize: 14,
-                            color: Color(0xFF52335E),
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
+                          )
+                        else
+                          Center(
+                            child: SizedBox(
+                              width: buttonWidthMobile,
+                              height: 50,
+                              child: OutlinedButton.icon(
+                                // Ícone do Google à esquerda (ajuste o path do asset se necessário)
+                                icon: Image.asset(
+                                  'assets/images/web_light_sq_ctn@2x.png',
+                                  width: 28,
+                                  height: 28,
+                                ),
+                                label: const Text(
+                                  'Continuar com Google',
+                                  style: TextStyle(
+                                    fontSize: 16,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                                onPressed: () async {
+                                  await _handleSignIn();
+                                },
+                                style: OutlinedButton.styleFrom(
+                                  backgroundColor: Color(0xFF69182D),
+                                  side: const BorderSide(color: Color(0xFF69182D)),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(25),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                        const SizedBox(height: 16),
+
+                        // === BOTÃO “Entrar com e-mail” ===
+                        Center(
+                          child: SizedBox(
+                            width: buttonWidthMobile,
+                            height: 50,
+                            child: OutlinedButton.icon(
+                              icon: const Icon(
+                                Icons.email,
+                                color: Color(0xFF69182D),
+                              ),
+                              label: const Text(
+                                'Entrar com e-mail',
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: Color(0xFF69182D),
+                                ),
+                              ),
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const LoginEmailPage(),
+                                  ),
+                                );
+                              },
+                              style: OutlinedButton.styleFrom(
+                                backgroundColor: Colors.transparent,
+                                side: const BorderSide(color: Color(0xFF69182D)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(25),
+                                ),
+                              ),
+                            ),
                           ),
                         ),
-                      ),
-                    ],
+
+                        const SizedBox(height: 16),
+
+                        // === TEXTO “Não tem conta? Registre-se agora” ===
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Novo por aqui? ',
+                              style: TextStyle(fontSize: 14, color: Colors.white),
+                            ),
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (_) => const RegisterPage(),
+                                  ),
+                                );
+                              },
+                              child: const Text(
+                                'Crie a sua conta',
+                                style: TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  decoration: TextDecoration.underline,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+
+                        const SizedBox(height: 32),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-
-            const SizedBox(height: 32),
           ],
         ),
-      ),
-    );
+      );
+
   }
 }
