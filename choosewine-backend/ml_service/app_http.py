@@ -29,7 +29,7 @@ from datetime import datetime
 from dotenv import load_dotenv
 
 # -------------------------------------------------------------------
-# Carregamento de variáveis de ambiente
+# Carrega variáveis de ambiente
 # -------------------------------------------------------------------
 
 def load_env():

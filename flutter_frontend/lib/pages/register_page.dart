@@ -244,7 +244,7 @@ class _RegisterPageState extends State<RegisterPage> {
                         child: ElevatedButton(
                           onPressed: _isLoading ? null : _register,
                           style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF52335E),
+                            backgroundColor: Color(0xFF69182D),
                             shape: RoundedRectangleBorder(
                               borderRadius: BorderRadius.circular(4),
                             ),
@@ -278,7 +278,7 @@ class _RegisterPageState extends State<RegisterPage> {
                           style: TextStyle(
                             fontSize: 14,
                             decoration: TextDecoration.underline,
-                            color: Color(0xFF52335E),
+                            color: Color(0xFF69182D),
                           ),
                         ),
                       ),
