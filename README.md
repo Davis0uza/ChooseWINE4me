@@ -37,7 +37,6 @@ O módulo de recomendação do ChooseWine4me é híbrido, combinando várias té
     Preço (price)
     Avaliação (rating)
     País (country)
-    Região (region)
     Tipo (type)
     Produtor (winery)
   
@@ -52,3 +51,44 @@ O módulo de recomendação do ChooseWine4me é híbrido, combinando várias té
   
   3. ⭐ Fallback por Popularidade Global
   Se todas as estratégias anteriores falharem, o sistema sugere os vinhos mais bem avaliados em toda a plataforma, ordenados por rating.
+
+🚀 Iniciar o Projeto Localmente
+Para correr o projeto localmente, certifica-te de que tens os pré-requisitos instalados:
+
+    Node.js
+    Python (versão 3.10+)
+    Flutter SDK
+    MongoDB Atlas configurado
+
+⚙️ Backend (API Node.js)
+
+    cd choosewine-backend
+    node src/server.js
+    
+Garante que o ficheiro .env está corretamente configurado com os dados da base de dados e a chave do serviço.
+
+🤖 Microserviço de Recomendação (FastAPI em Python)
+
+    cd choosewine-backend
+    cd ml_service
+    . .\.venv\Scripts\Activate.ps1  # (no Windows PowerShell)
+    uvicorn app_http:app --reload --port 8000
+O microserviço carrega dados da API Node.js e utiliza modelos baseados em similaridade para recomendações.
+Importante: O ficheiro .env deve conter o IP correto da API principal (por exemplo, NODE_API_URL=http://127.0.0.1:3000).
+
+📱 Frontend (Flutter)
+
+    cd flutter_frontend
+    flutter pub get
+    flutter run
+    
+Certifica-te de que os IPs e portas estão corretos no ficheiro .env ou ficheiros de configuração usados no Flutter.
+
+⚠️ Configuração dos IPs
+Para garantir o bom funcionamento do sistema, é obrigatório ajustar os IPs locais nos ficheiros .env dos módulos:
+
+No backend: configurações da base de dados, Firebase, e API do recomendador.
+
+No ml_service: variável NODE_API_URL com o IP/porta do backend.
+
+No frontend: endpoints para os serviços HTTP devem apontar para os IPs e portas corretos (ex: http://10.0.2.2:3000 no Android Emulator).
